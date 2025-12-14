@@ -67,7 +67,7 @@ struct Config
     AssetClass d_assetClass = AssetClass::Equity;
 
     // number of orders to generate in sim -- set to -1 for infinite orders
-    int d_ordersToGenerate = 100;
+    int d_ordersToGenerate = 10000;
 
     // how many variations of underlying asset class to use in sim (e.g. AAPL, MSFT etc)
     int d_underlyingPoolCount = 10;
