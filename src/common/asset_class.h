@@ -22,14 +22,15 @@ enum class AssetClass : uint8_t
 {
     Equity,
     Future,
+    Option,
     COUNT
 };
 
 static constexpr std::array<const char*, static_cast<size_t>(AssetClass::COUNT)> ASSET_CLASS_STR = {
-    "Equity", "Future"};
+    "Equity", "Future", "Option"};
 
 constexpr std::array<AssetClass, static_cast<size_t>(AssetClass::COUNT)> ALL_ASSET_CLASSES = {
-    AssetClass::Equity, AssetClass::Future};
+    AssetClass::Equity, AssetClass::Future, AssetClass::Option};
 
 const char* to_string(AssetClass cls);
 
@@ -62,7 +63,7 @@ enum class Equity : uint8_t
     COUNT
 };
 
-static constexpr std::array<const char*, static_cast<size_t>(Equity::COUNT)> EQTY_STR = {
+static constexpr std::array<const char*, static_cast<size_t>(Equity::COUNT)> EQ_STR = {
     "AAPL", "MSFT", "GOOGL", "AMZN", "META", "BLK",  "NVDA", "AMD", "INTC", "QCOM",
     "JPM",  "BAC",  "CRM",   "GS",   "MS",   "ORCL", "IBM",  "TSM", "UBER", "LYFT"};
 
@@ -107,10 +108,71 @@ constexpr std::array<Future, static_cast<size_t>(Future::COUNT)> ALL_FUTURES = {
     Future::TSLA_MAR26, Future::TSLA_JUN26, Future::TSLA_SEP26, Future::TSLA_DEC26};
 
 // ===================================================================
+// Enum: Option
+// ===================================================================
+
+enum class Option : uint8_t
+{
+    // AAPL Calls
+    AAPL_MAR26_C,
+    AAPL_JUN26_C,
+    AAPL_SEP26_C,
+    AAPL_DEC26_C,
+
+    // AAPL Puts
+    AAPL_MAR26_P,
+    AAPL_JUN26_P,
+    AAPL_SEP26_P,
+    AAPL_DEC26_P,
+
+    // MSFT Calls
+    MSFT_MAR26_C,
+    MSFT_JUN26_C,
+    MSFT_SEP26_C,
+    MSFT_DEC26_C,
+
+    // MSFT Puts
+    MSFT_MAR26_P,
+    MSFT_JUN26_P,
+    MSFT_SEP26_P,
+    MSFT_DEC26_P,
+
+    // TSLA Calls
+    TSLA_MAR26_C,
+    TSLA_JUN26_C,
+    TSLA_SEP26_C,
+    TSLA_DEC26_C,
+
+    // TSLA Puts
+    TSLA_MAR26_P,
+    TSLA_JUN26_P,
+    TSLA_SEP26_P,
+    TSLA_DEC26_P,
+
+    COUNT
+};
+
+static constexpr std::array<const char*, static_cast<size_t>(Option::COUNT)> OPT_STR = {
+    "AAPL_MAR26_C", "AAPL_JUN26_C", "AAPL_SEP26_C", "AAPL_DEC26_C", "AAPL_MAR26_P", "AAPL_JUN26_P",
+    "AAPL_SEP26_P", "AAPL_DEC26_P", "MSFT_MAR26_C", "MSFT_JUN26_C", "MSFT_SEP26_C", "MSFT_DEC26_C",
+    "MSFT_MAR26_P", "MSFT_JUN26_P", "MSFT_SEP26_P", "MSFT_DEC26_P", "TSLA_MAR26_C", "TSLA_JUN26_C",
+    "TSLA_SEP26_C", "TSLA_DEC26_C", "TSLA_MAR26_P", "TSLA_JUN26_P", "TSLA_SEP26_P", "TSLA_DEC26_P",
+};
+
+constexpr std::array<Option, static_cast<size_t>(Option::COUNT)> ALL_OPTIONS = {
+    Option::AAPL_MAR26_C, Option::AAPL_JUN26_C, Option::AAPL_SEP26_C, Option::AAPL_DEC26_C,
+    Option::AAPL_MAR26_P, Option::AAPL_JUN26_P, Option::AAPL_SEP26_P, Option::AAPL_DEC26_P,
+    Option::MSFT_MAR26_C, Option::MSFT_JUN26_C, Option::MSFT_SEP26_C, Option::MSFT_DEC26_C,
+    Option::MSFT_MAR26_P, Option::MSFT_JUN26_P, Option::MSFT_SEP26_P, Option::MSFT_DEC26_P,
+    Option::TSLA_MAR26_C, Option::TSLA_JUN26_C, Option::TSLA_SEP26_C, Option::TSLA_DEC26_C,
+    Option::TSLA_MAR26_P, Option::TSLA_JUN26_P, Option::TSLA_SEP26_P, Option::TSLA_DEC26_P,
+};
+
+// ===================================================================
 // Type Declaration
 // ===================================================================
 
-using Underlying = std::variant<Equity, Future>;
+using Underlying = std::variant<Equity, Future, Option>;
 
 AssetClass randomAssetClass();
 
@@ -127,7 +189,9 @@ const char* to_string(T type)
 
     if (std::is_same_v<T, Future>) return FTR_STR[underlying];
 
-    if (std::is_same_v<T, Equity>) return EQTY_STR[underlying];
+    if (std::is_same_v<T, Equity>) return EQ_STR[underlying];
+
+    if (std::is_same_v<T, Option>) return OPT_STR[underlying];
 }
 
 template <typename T>

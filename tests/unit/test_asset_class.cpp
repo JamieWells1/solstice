@@ -40,8 +40,8 @@ TEST(AssetClassTests, FutureConvertsToString)
 
 TEST(AssetClassTests, UnderlyingVariantConvertsToString)
 {
-    Underlying eqtyVariant = Equity::AAPL;
-    ASSERT_TRUE(std::string(to_string(eqtyVariant)) == "AAPL");
+    Underlying eqVariant = Equity::AAPL;
+    ASSERT_TRUE(std::string(to_string(eqVariant)) == "AAPL");
 
     Underlying ftrVariant = Future::TSLA_DEC26;
     ASSERT_TRUE(std::string(to_string(ftrVariant)) == "TSLA_DEC26");
