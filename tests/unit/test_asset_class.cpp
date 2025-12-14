@@ -38,6 +38,12 @@ TEST(AssetClassTests, FutureConvertsToString)
     ASSERT_TRUE(std::string(to_string(Future::MSFT_JUN26)) == "MSFT_JUN26");
 }
 
+TEST(AssetClassTests, OptionConvertsToString)
+{
+    ASSERT_TRUE(std::string(to_string(Option::AAPL_DEC26_C)) == "AAPL_DEC26_C");
+    ASSERT_TRUE(std::string(to_string(Option::AAPL_JUN26_P)) == "AAPL_JUN26_P");
+}
+
 TEST(AssetClassTests, UnderlyingVariantConvertsToString)
 {
     Underlying eqVariant = Equity::AAPL;
@@ -45,15 +51,21 @@ TEST(AssetClassTests, UnderlyingVariantConvertsToString)
 
     Underlying ftrVariant = Future::TSLA_DEC26;
     ASSERT_TRUE(std::string(to_string(ftrVariant)) == "TSLA_DEC26");
+
+    Underlying optVariant = Option::TSLA_DEC26_C;
+    ASSERT_TRUE(std::string(to_string(optVariant)) == "TSLA_DEC26_C");
 }
 
 TEST(AssetClassTests, UnderlyingVariantEquality)
 {
     Underlying variant = Equity::MSFT;
+
     ASSERT_TRUE(variant == Equity::MSFT);
     ASSERT_TRUE(Equity::MSFT == variant);
+
     ASSERT_FALSE(variant == Equity::AAPL);
     ASSERT_FALSE(variant == Future::AAPL_MAR26);
+    ASSERT_FALSE(variant == Option::AAPL_MAR26_C);
 }
 
 }  // namespace solstice

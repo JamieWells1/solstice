@@ -1,4 +1,4 @@
-add_library(pricing STATIC pricer.cpp equity_price_data.cpp future_price_data.cpp pricing_utils.cpp)
+add_library(pricing STATIC pricer.cpp equity_price_data.cpp future_price_data.cpp option_price_data.cpp pricing_utils.cpp)
 
 target_include_directories(pricing
     PUBLIC

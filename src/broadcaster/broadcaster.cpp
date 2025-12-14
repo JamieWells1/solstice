@@ -193,8 +193,6 @@ Broadcaster::Broadcaster(unsigned short port) : d_ioc(1)
 
     d_ioThread = std::thread([this, port]() { this->run(port); });
     d_broadcastThread = std::thread([this]() { this->broadcastWorker(); });
-
-    std::cout << "WebSocket server started on port " << port << std::endl;
 }
 
 Broadcaster::~Broadcaster()

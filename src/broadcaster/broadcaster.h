@@ -15,7 +15,6 @@
 #include <json.hpp>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <queue>
 #include <thread>
 #include <vector>

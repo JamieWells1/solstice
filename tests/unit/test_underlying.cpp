@@ -33,9 +33,9 @@ void resetGlobalStateAll()
 class UnderlyingTests : public ::testing::Test
 {
    protected:
-    void SetUp() override { resetGlobalStateAllBeforeTest<Equity, Future>(); }
+    void SetUp() override { resetGlobalStateAllBeforeTest<Equity, Future, Option>(); }
 
-    void TearDown() override { resetGlobalStateAll<Equity, Future>(); }
+    void TearDown() override { resetGlobalStateAll<Equity, Future, Option>(); }
 };
 
 TEST_F(UnderlyingTests, UnderlyingToString)
@@ -100,6 +100,16 @@ TEST_F(UnderlyingTests, underlyingsPoolInitialisedReturnsTrueAfterInit)
     ASSERT_TRUE(underlyingsPoolInitialised<Equity>());
 }
 
+TEST_F(UnderlyingTests, EquityUnderlyingPoolWorks)
+{
+    setUnderlyingsPool(5, ALL_EQUITIES);
+    auto pool = underlyingsPool<Equity>();
+    EXPECT_EQ(pool.size(), 5);
+
+    auto result = randomUnderlying<Equity>();
+    ASSERT_TRUE(result.has_value());
+}
+
 TEST_F(UnderlyingTests, FutureUnderlyingPoolWorks)
 {
     setUnderlyingsPool(5, ALL_FUTURES);
@@ -107,6 +117,16 @@ TEST_F(UnderlyingTests, FutureUnderlyingPoolWorks)
     EXPECT_EQ(pool.size(), 5);
 
     auto result = randomUnderlying<Future>();
+    ASSERT_TRUE(result.has_value());
+}
+
+TEST_F(UnderlyingTests, OptionUnderlyingPoolWorks)
+{
+    setUnderlyingsPool(5, ALL_OPTIONS);
+    auto pool = underlyingsPool<Option>();
+    EXPECT_EQ(pool.size(), 5);
+
+    auto result = randomUnderlying<Option>();
     ASSERT_TRUE(result.has_value());
 }
 

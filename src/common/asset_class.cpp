@@ -46,6 +46,15 @@ std::expected<Underlying, std::string> getUnderlying(AssetClass assetClass)
             }
             return *underlying;
         }
+        case AssetClass::Option:
+        {
+            auto underlying = randomUnderlying<Option>();
+            if (!underlying)
+            {
+                return std::unexpected(underlying.error());
+            }
+            return *underlying;
+        }
         default:
             return std::unexpected("Invalid asset class\n");
     }

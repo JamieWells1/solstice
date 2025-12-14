@@ -228,6 +228,18 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             }
 
             break;
+        case AssetClass::Option:
+            setUnderlyingsPool(config().underlyingPoolCount(), ALL_OPTIONS);
+
+            orderBook()->initialiseBookAtUnderlyings<Option>();
+            pricer()->initialisePricerOptions();
+
+            for (Option underlying : underlyingsPool<Option>())
+            {
+                underlyingMutexes()[underlying];
+            }
+
+            break;
         case AssetClass::COUNT:
             break;
     }

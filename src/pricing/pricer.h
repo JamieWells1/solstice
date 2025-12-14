@@ -4,6 +4,7 @@
 #include <asset_class.h>
 #include <equity_price_data.h>
 #include <future_price_data.h>
+#include <option_price_data.h>
 #include <get_random.h>
 #include <market_side.h>
 #include <order_book.h>
@@ -39,6 +40,7 @@ class Pricer
 
     void initialisePricerEquities();
     void initialisePricerFutures();
+    void initialisePricerOptions();
 
     void update(matching::OrderPtr order);
 
@@ -96,10 +98,12 @@ class Pricer
    public:
     EquityPriceData& getPriceData(Equity eq);
     FuturePriceData& getPriceData(Future fut);
+    OptionPriceData& getPriceData(Option opt);
 
     // propogate results from market side calc
     double calculatePrice(Equity eq, MarketSide mktSide);
     double calculatePrice(Future fut, MarketSide mktSide);
+    double calculatePrice(Option opt, MarketSide mktSide);
 
     double calculatePriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
                               double demandFactor);
@@ -107,6 +111,7 @@ class Pricer
     // propogate results from market side calc and price calc
     int calculateQnty(Equity eq, MarketSide mktSide, double price);
     int calculateQnty(Future fut, MarketSide mktSide, double price);
+    int calculateQnty(Option opt, MarketSide mktSide, double price);
 
    private:
     double generateSeedPrice();
@@ -127,6 +132,7 @@ class Pricer
 
     MarketSide calculateMarketSide(Equity eq);
     MarketSide calculateMarketSide(Future fut);
+    MarketSide calculateMarketSide(Option opt);
 
     MarketSide calculateMarketSideImpl(double probability);
 
@@ -136,6 +142,7 @@ class Pricer
 
     std::unordered_map<Equity, EquityPriceData> d_equityDataMap;
     std::unordered_map<Future, FuturePriceData> d_futureDataMap;
+    std::unordered_map<Option, OptionPriceData> d_optionDataMap;
 
     double d_seedPrice;
 

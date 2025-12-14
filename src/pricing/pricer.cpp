@@ -8,6 +8,7 @@
 
 #include <cmath>
 #include <unordered_map>
+#include "option_price_data.h"
 
 namespace solstice::pricing
 {
@@ -78,6 +79,14 @@ void Pricer::initialisePricerFutures()
     }
 }
 
+void Pricer::initialisePricerOptions()
+{
+    for (const auto& underlying : underlyingsPool<Option>())
+    {
+        d_optionDataMap.emplace(underlying, OptionPriceData(underlying));
+    }
+}
+
 // ===================================================================
 // PRE-PROCESSING
 // ===================================================================
@@ -92,6 +101,8 @@ EquityPriceData& Pricer::getPriceData(Equity eq) { return d_equityDataMap.at(eq)
 
 FuturePriceData& Pricer::getPriceData(Future fut) { return d_futureDataMap.at(fut); }
 
+OptionPriceData& Pricer::getPriceData(Option opt) { return d_optionDataMap.at(opt); }
+
 MarketSide Pricer::calculateMarketSide(Equity eq)
 {
     EquityPriceData data = getPriceData(eq);
@@ -103,6 +114,14 @@ MarketSide Pricer::calculateMarketSide(Equity eq)
 MarketSide Pricer::calculateMarketSide(Future fut)
 {
     FuturePriceData data = getPriceData(fut);
+    double p = data.demandFactor() * data.demandFactor();
+
+    return calculateMarketSideImpl(p);
+}
+
+MarketSide Pricer::calculateMarketSide(Option opt)
+{
+    OptionPriceData data = getPriceData(opt);
     double p = data.demandFactor() * data.demandFactor();
 
     return calculateMarketSideImpl(p);
@@ -378,6 +397,11 @@ double Pricer::calculatePrice(Future fut, MarketSide mktSide)
     return calculatePriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
 }
 
+double Pricer::calculatePrice(Option opt, MarketSide mktSide)
+{
+    // TODO
+}
+
 int Pricer::calculateQnty(Equity eq, MarketSide mktSide, double price)
 {
     EquityPriceData data = getPriceData(eq);
@@ -410,6 +434,11 @@ int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
         return Random::getRandomInt(MIN_QUANTITY, MIN_QUANTITY_THRESHOLD);
 
     return Random::getRandomInt(MIN_QUANTITY, maxQuantity);
+}
+
+int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
+{
+    // TODO
 }
 
 // ===================================================================

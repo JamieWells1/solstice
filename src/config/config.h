@@ -64,10 +64,10 @@ struct Config
     LogLevel d_logLevel = LogLevel::DEBUG;
 
     // asset class to use in sim
-    AssetClass d_assetClass = AssetClass::Equity;
+    AssetClass d_assetClass = AssetClass::Option;
 
     // number of orders to generate in sim -- set to -1 for infinite orders
-    int d_ordersToGenerate = 10000;
+    int d_ordersToGenerate = 10;
 
     // how many variations of underlying asset class to use in sim (e.g. AAPL, MSFT etc)
     int d_underlyingPoolCount = 10;
@@ -85,7 +85,7 @@ struct Config
     double d_maxPrice = 10.0;
 
     // enable use of pricer when generating orders
-    bool d_usePricer = true;
+    bool d_usePricer = false;
 
     // enable outbound LAN web broadcaster
     bool d_enableBroadcaster = false;

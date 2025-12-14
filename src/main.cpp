@@ -18,7 +18,6 @@ int main()
         return -1;
     }
 
-    // start broadcaster
     std::optional<broadcaster::Broadcaster> broadcaster;
     if (config->enableBroadcaster())
     {
