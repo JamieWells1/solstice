@@ -65,7 +65,7 @@ struct Config
 
     // asset class to use in sim
     // if set to option, an underlying equity will be generated for each generated option
-    AssetClass d_assetClass = AssetClass::Equity;
+    AssetClass d_assetClass = AssetClass::Option;
 
     // number of orders to generate in sim -- set to -1 for infinite orders
     int d_ordersToGenerate = 100;

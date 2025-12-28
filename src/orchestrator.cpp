@@ -39,7 +39,7 @@ std::map<Underlying, std::mutex>& Orchestrator::underlyingMutexes() { return d_u
 
 std::queue<OrderPtr>& Orchestrator::orderProcessQueue() { return d_orderProcessQueue; }
 
-std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGenerated)
+std::expected<std::vector<OrderPtr>, std::string> Orchestrator::generateOrders(int ordersGenerated)
 {
     int uid = ordersGenerated;
 
@@ -53,7 +53,8 @@ std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGener
         assetClasses.emplace_back(AssetClass::Equity);
     }
 
-    std::expected<OrderPtr, std::string> order;
+    std::vector<OrderPtr> orders;
+    orders.reserve(assetClasses.size());
 
     for (AssetClass assetClass : assetClasses)
     {
@@ -63,6 +64,7 @@ std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGener
             return std::unexpected(underlying.error());
         }
 
+        std::expected<OrderPtr, std::string> order;
         if (config().usePricer())
         {
             order = Order::createWithPricer(pricer(), uid, *underlying);
@@ -71,13 +73,15 @@ std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGener
         {
             order = Order::createWithRandomValues(config(), uid, *underlying);
         }
+
+        if (!order)
+        {
+            return std::unexpected(order.error());
+        }
+        orders.push_back(*order);
     }
 
-    if (!order)
-    {
-        return std::unexpected(order.error());
-    }
-    return order;
+    return orders;
 }
 
 bool Orchestrator::processOrder(OrderPtr order)
@@ -289,15 +293,19 @@ std::expected<std::pair<int, int>, std::string> Orchestrator::produceOrders()
     int ordersGenerated = 0;
     while (infiniteMode || i < static_cast<size_t>(config().ordersToGenerate()))
     {
-        auto order = generateOrder(ordersGenerated);
-        if (!order)
+        auto orders = generateOrders(ordersGenerated);
+        if (!orders)
         {
             d_done.store(true);
             d_queueConditionVar.notify_all();
             for (auto& thread : threadPool) thread.join();
-            return std::unexpected(order.error());
+            return std::unexpected(orders.error());
         }
-        pushToQueue(*order);
+
+        for (const auto& order : *orders)
+        {
+            pushToQueue(order);
+        }
 
         if (!infiniteMode)
         {
