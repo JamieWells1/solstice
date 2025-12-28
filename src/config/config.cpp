@@ -7,28 +7,6 @@ namespace solstice
 
 Config::Config() {}
 
-std::expected<void, std::string> Config::checkConfig(Config& config)
-{
-    auto values = {double(config.ordersToGenerate()), double(config.minQnty()),
-                   double(config.maxQnty()),          double(config.minPrice()),
-                   double(config.maxPrice()),         double(config.underlyingPoolCount())};
-
-    if (config.ordersToGenerate() == -1)
-    {
-        return {};
-    }
-
-    for (auto value : values)
-    {
-        if (value < 0)
-        {
-            return std::unexpected(std::format("Invalid config value: '{}'\n", value));
-        }
-    }
-
-    return {};
-}
-
 std::expected<Config, std::string> Config::instance()
 {
     Config config;
@@ -66,5 +44,27 @@ void Config::enableBroadcaster(bool enableBroadcaster) { d_enableBroadcaster = e
 void Config::broadcastInterval(int broadcastInterval) { d_broadcastInterval = broadcastInterval; }
 
 int Config::initialBalance() { return d_initialBalance; }
+
+std::expected<void, std::string> Config::checkConfig(Config& config)
+{
+    auto values = {double(config.ordersToGenerate()), double(config.minQnty()),
+                   double(config.maxQnty()),          double(config.minPrice()),
+                   double(config.maxPrice()),         double(config.underlyingPoolCount())};
+
+    if (config.ordersToGenerate() == -1)
+    {
+        return {};
+    }
+
+    for (auto value : values)
+    {
+        if (value < 0)
+        {
+            return std::unexpected(std::format("Invalid config value: '{}'\n", value));
+        }
+    }
+
+    return {};
+}
 
 }  // namespace solstice

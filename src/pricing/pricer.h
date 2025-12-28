@@ -4,9 +4,9 @@
 #include <asset_class.h>
 #include <equity_price_data.h>
 #include <future_price_data.h>
-#include <option_price_data.h>
 #include <get_random.h>
 #include <market_side.h>
+#include <option_price_data.h>
 #include <order_book.h>
 #include <order_type.h>
 #include <pricing_utils.h>
@@ -38,9 +38,9 @@ class Pricer
    public:
     Pricer(std::shared_ptr<matching::OrderBook> orderBook);
 
-    void initialisePricerEquities();
-    void initialisePricerFutures();
-    void initialisePricerOptions();
+    void addEquitiesToDataMap();
+    void addFuturesToDataMap();
+    void addOptionsToDataMap();
 
     void update(matching::OrderPtr order);
 

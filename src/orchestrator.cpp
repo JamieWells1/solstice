@@ -43,20 +43,28 @@ std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGener
 {
     int uid = ordersGenerated;
 
-    auto underlying = getUnderlying(config().assetClass());
-    if (!underlying)
+    std::vector<AssetClass> assetClasses;
+    assetClasses.emplace_back(config().assetClass());
+
+    if (assetClasses.at(0) == AssetClass::Option)
     {
-        return std::unexpected(underlying.error());
+        // also add equities for options to be priced on
+        assetClasses.emplace_back(AssetClass::Equity);
     }
 
     std::expected<OrderPtr, std::string> order;
-    if (config().usePricer())
+
+    for (AssetClass assetClass : assetClasses)
     {
-        order = Order::createWithPricer(pricer(), uid, *underlying);
-    }
-    else
-    {
-        order = Order::createWithRandomValues(config(), uid, *underlying);
+        auto underlying = getUnderlying(assetClass);
+        if (config().usePricer())
+        {
+            order = Order::createWithPricer(pricer(), uid, *underlying);
+        }
+        else
+        {
+            order = Order::createWithRandomValues(config(), uid, *underlying);
+        }
     }
 
     if (!order)
@@ -208,7 +216,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_EQUITIES);
 
             orderBook()->initialiseBookAtUnderlyings<Equity>();
-            pricer()->initialisePricerEquities();
+            pricer()->addEquitiesToDataMap();
 
             for (Equity underlying : underlyingsPool<Equity>())
             {
@@ -220,7 +228,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_FUTURES);
 
             orderBook()->initialiseBookAtUnderlyings<Future>();
-            pricer()->initialisePricerFutures();
+            pricer()->addFuturesToDataMap();
 
             for (Future underlying : underlyingsPool<Future>())
             {
@@ -231,9 +239,16 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
         case AssetClass::Option:
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_OPTIONS);
 
+            orderBook()->initialiseBookAtUnderlyings<Equity>();
             orderBook()->initialiseBookAtUnderlyings<Option>();
-            pricer()->initialisePricerOptions();
 
+            pricer()->addEquitiesToDataMap();
+            pricer()->addOptionsToDataMap();
+
+            for (Equity underlying : underlyingsPool<Equity>())
+            {
+                underlyingMutexes()[underlying];
+            }
             for (Option underlying : underlyingsPool<Option>())
             {
                 underlyingMutexes()[underlying];

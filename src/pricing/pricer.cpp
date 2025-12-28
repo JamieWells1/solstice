@@ -63,7 +63,7 @@ Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(ord
     d_seedPrice = generateSeedPrice();
 }
 
-void Pricer::initialisePricerEquities()
+void Pricer::addEquitiesToDataMap()
 {
     for (const auto& underlying : underlyingsPool<Equity>())
     {
@@ -71,7 +71,7 @@ void Pricer::initialisePricerEquities()
     }
 }
 
-void Pricer::initialisePricerFutures()
+void Pricer::addFuturesToDataMap()
 {
     for (const auto& underlying : underlyingsPool<Future>())
     {
@@ -79,7 +79,7 @@ void Pricer::initialisePricerFutures()
     }
 }
 
-void Pricer::initialisePricerOptions()
+void Pricer::addOptionsToDataMap()
 {
     for (const auto& underlying : underlyingsPool<Option>())
     {
