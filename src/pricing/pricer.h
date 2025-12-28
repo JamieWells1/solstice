@@ -23,9 +23,9 @@ struct PricerDepOrderData
    public:
     PricerDepOrderData(MarketSide d_marketSide, double d_price, int d_qnty);
 
-    MarketSide marketSide();
-    double price();
-    int qnty();
+    MarketSide marketSide() const;
+    double price() const;
+    int qnty() const;
 
    private:
     MarketSide d_marketSide;

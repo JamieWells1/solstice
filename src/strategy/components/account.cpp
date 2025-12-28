@@ -19,9 +19,9 @@ std::expected<Account, std::string> Account::create()
 
 // getters
 
-int Account::balance() { return d_balance; }
+int Account::balance() const { return d_balance; }
 
-std::vector<Position>& Account::positions() { return d_positions; }
+const std::vector<Position>& Account::positions() const { return d_positions; }
 
 // setters
 

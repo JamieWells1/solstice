@@ -17,17 +17,17 @@ struct FuturePriceData
         setInitialMovingAverage(*this);
     }
 
-    Future underlying();
-    int maRange();
+    Future underlying() const;
+    int maRange() const;
 
-    double lastPrice();
-    double highestBid();
-    double lowestAsk();
-    double demandFactor();
-    double movingAverage();
-    int executions();
-    double pricesSum();
-    double pricesSumSquared();
+    double lastPrice() const;
+    double highestBid() const;
+    double lowestAsk() const;
+    double demandFactor() const;
+    double movingAverage() const;
+    int executions() const;
+    double pricesSum() const;
+    double pricesSumSquared() const;
 
     void underlying(Future fut);
 
@@ -40,7 +40,7 @@ struct FuturePriceData
     void pricesSum(double newPricesSum);
     void pricesSumSquared(double newPricesSumSquared);
 
-    double standardDeviation(FuturePriceData& data);
+    double standardDeviation(const FuturePriceData& data) const;
 
    private:
     static constexpr int d_maRange = 10;

@@ -17,17 +17,17 @@ struct EquityPriceData
         setInitialMovingAverage(*this);
     }
 
-    Equity underlying();
-    int maRange();
+    Equity underlying() const;
+    int maRange() const;
 
-    double lastPrice();
-    double highestBid();
-    double lowestAsk();
-    double demandFactor();
-    double movingAverage();
-    int executions();
-    double pricesSum();
-    double pricesSumSquared();
+    double lastPrice() const;
+    double highestBid() const;
+    double lowestAsk() const;
+    double demandFactor() const;
+    double movingAverage() const;
+    int executions() const;
+    double pricesSum() const;
+    double pricesSumSquared() const;
 
     void underlying(Equity eq);
 
@@ -40,7 +40,7 @@ struct EquityPriceData
     void pricesSum(double newPricesSum);
     void pricesSumSquared(double newPricesSumSquared);
 
-    double standardDeviation(EquityPriceData& data);
+    double standardDeviation(const EquityPriceData& data) const;
 
    private:
     static constexpr int d_maRange = 10;

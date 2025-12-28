@@ -43,7 +43,7 @@ void Config::usePricer(bool usePricer) { d_usePricer = usePricer; }
 void Config::enableBroadcaster(bool enableBroadcaster) { d_enableBroadcaster = enableBroadcaster; }
 void Config::broadcastInterval(int broadcastInterval) { d_broadcastInterval = broadcastInterval; }
 
-int Config::initialBalance() { return d_initialBalance; }
+int Config::initialBalance() const { return d_initialBalance; }
 
 std::expected<void, std::string> Config::checkConfig(Config& config)
 {

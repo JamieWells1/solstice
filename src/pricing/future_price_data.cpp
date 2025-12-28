@@ -3,16 +3,16 @@
 namespace solstice::pricing
 {
 
-Future FuturePriceData::underlying() { return d_future; }
-double FuturePriceData::lastPrice() { return d_lastPrice; }
-double FuturePriceData::highestBid() { return d_highestBid; }
-double FuturePriceData::lowestAsk() { return d_lowestAsk; }
-double FuturePriceData::demandFactor() { return d_demandFactor; }
-double FuturePriceData::movingAverage() { return d_movingAverage; }
-int FuturePriceData::executions() { return d_executions; }
-int FuturePriceData::maRange() { return d_maRange; }
-double FuturePriceData::pricesSum() { return d_pricesSum; }
-double FuturePriceData::pricesSumSquared() { return d_pricesSumSquared; }
+Future FuturePriceData::underlying() const { return d_future; }
+double FuturePriceData::lastPrice() const { return d_lastPrice; }
+double FuturePriceData::highestBid() const { return d_highestBid; }
+double FuturePriceData::lowestAsk() const { return d_lowestAsk; }
+double FuturePriceData::demandFactor() const { return d_demandFactor; }
+double FuturePriceData::movingAverage() const { return d_movingAverage; }
+int FuturePriceData::executions() const { return d_executions; }
+int FuturePriceData::maRange() const { return d_maRange; }
+double FuturePriceData::pricesSum() const { return d_pricesSum; }
+double FuturePriceData::pricesSumSquared() const { return d_pricesSumSquared; }
 
 void FuturePriceData::underlying(Future newUnderlying) { d_future = newUnderlying; }
 void FuturePriceData::lastPrice(double newLastPrice) { d_lastPrice = newLastPrice; }
@@ -27,7 +27,7 @@ void FuturePriceData::pricesSumSquared(double newPricesSumSq)
     d_pricesSumSquared = newPricesSumSq;
 }
 
-double FuturePriceData::standardDeviation(FuturePriceData& data)
+double FuturePriceData::standardDeviation(const FuturePriceData& data) const
 {
     double n = data.executions();
     if (n < 2) return 0;

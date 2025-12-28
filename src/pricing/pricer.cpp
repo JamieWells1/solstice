@@ -52,11 +52,11 @@ PricerDepOrderData::PricerDepOrderData(MarketSide marketSide, double price, int 
 {
 }
 
-MarketSide PricerDepOrderData::marketSide() { return d_marketSide; }
+MarketSide PricerDepOrderData::marketSide() const { return d_marketSide; }
 
-double PricerDepOrderData::price() { return d_price; }
+double PricerDepOrderData::price() const { return d_price; }
 
-int PricerDepOrderData::qnty() { return d_qnty; }
+int PricerDepOrderData::qnty() const { return d_qnty; }
 
 Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(orderBook)
 {

@@ -50,7 +50,7 @@ struct Config
 
     static const strategy::Strategy strategy = strategy::Strategy::SharpMovements;
 
-    int initialBalance();
+    int initialBalance() const;
 
    private:
     // ===================================================================

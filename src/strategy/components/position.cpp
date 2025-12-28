@@ -13,13 +13,15 @@ Position::Position(PositionType posType, double posSize, double entryPrice)
 
 // getters
 
-PositionType Position::posType() { return d_posType; }
+PositionType Position::posType() const { return d_posType; }
 
-double Position::entryPrice() { return d_entryPrice; }
+double Position::posSize() const { return d_posSize; }
 
-double Position::exitPrice() { return d_exitPrice; }
+double Position::entryPrice() const { return d_entryPrice; }
 
-double Position::active() { return d_active; }
+double Position::exitPrice() const { return d_exitPrice; }
+
+double Position::active() const { return d_active; }
 
 // setters
 

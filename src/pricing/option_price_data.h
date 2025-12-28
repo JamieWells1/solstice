@@ -17,17 +17,17 @@ struct OptionPriceData
         setInitialMovingAverage(*this);
     }
 
-    Option underlying();
-    int maRange();
+    Option underlying() const;
+    int maRange() const;
 
-    double lastPrice();
-    double highestBid();
-    double lowestAsk();
-    double demandFactor();
-    double movingAverage();
-    int executions();
-    double pricesSum();
-    double pricesSumSquared();
+    double lastPrice() const;
+    double highestBid() const;
+    double lowestAsk() const;
+    double demandFactor() const;
+    double movingAverage() const;
+    int executions() const;
+    double pricesSum() const;
+    double pricesSumSquared() const;
 
     void underlying(Option fut);
 
@@ -40,7 +40,7 @@ struct OptionPriceData
     void pricesSum(double newPricesSum);
     void pricesSumSquared(double newPricesSumSquared);
 
-    double standardDeviation(OptionPriceData& data);
+    double standardDeviation(const OptionPriceData& data) const;
 
    private:
     static constexpr int d_maRange = 10;
