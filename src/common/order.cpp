@@ -28,6 +28,8 @@ Order::Order(int uid, Underlying underlying, double price, int qnty, MarketSide 
 {
     d_matched = false;
     d_outstandingQnty = qnty;
+
+    d_assetClass = underlying.index();
 }
 
 std::expected<std::shared_ptr<Order>, std::string> Order::create(int uid, Underlying underlying,
@@ -51,7 +53,7 @@ std::expected<std::shared_ptr<Order>, std::string> Order::create(int uid, Underl
 std::expected<std::shared_ptr<Order>, std::string> Order::createWithPricer(
     std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
 {
-    pricing::PricerDepOrderData data = pricer->compute(underlying);
+    pricing::PricerDepOrderData data = pricer->computeOrderData(underlying);
 
     return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
 }
@@ -71,6 +73,8 @@ std::expected<std::shared_ptr<Order>, std::string> Order::createWithRandomValues
 int Order::uid() const { return d_uid; }
 
 Underlying Order::underlying() const { return d_underlying; }
+
+AssetClass Order::assetClass() const { return static_cast<AssetClass>(d_underlying.index()); }
 
 double Order::price() const
 {

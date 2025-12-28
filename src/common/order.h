@@ -34,6 +34,7 @@ class Order
 
     int uid() const;
     Underlying underlying() const;
+    AssetClass assetClass() const;
     double price() const;
     int qnty() const;
     int outstandingQnty() const;
@@ -63,6 +64,7 @@ class Order
 
     int d_uid;
     Underlying d_underlying;
+    size_t d_assetClass;
     double d_price;
     int d_qnty;
     int d_outstandingQnty;

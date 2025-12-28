@@ -55,6 +55,7 @@ std::string Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matched
 
     // Incoming order
     oss << "Order: " << incomingOrder->uid()
+        << " | Asset class: " << incomingOrder->assetClass()
         << " | Status: Matched"
         << " | Matched with: " << matchedOrder->uid()
         << " | Side: " << incomingOrder->marketSideString()
@@ -71,6 +72,7 @@ std::string Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matched
 
     // Matched order
     oss << "Order: " << matchedOrder->uid()
+        << " | Asset class: " << incomingOrder->assetClass()
         << " | Status: Matched"
         << " | Matched with: " << incomingOrder->uid()
         << " | Side: " << matchedOrder->marketSideString()

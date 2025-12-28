@@ -44,11 +44,12 @@ std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGener
     int uid = ordersGenerated;
 
     std::vector<AssetClass> assetClasses;
+    assetClasses.reserve(2);
     assetClasses.emplace_back(config().assetClass());
 
     if (assetClasses.at(0) == AssetClass::Option)
     {
-        // also add equities for options to be priced on
+        // also add equities as underlying for options
         assetClasses.emplace_back(AssetClass::Equity);
     }
 
@@ -57,6 +58,11 @@ std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGener
     for (AssetClass assetClass : assetClasses)
     {
         auto underlying = getUnderlying(assetClass);
+        if (!underlying)
+        {
+            return std::unexpected(underlying.error());
+        }
+
         if (config().usePricer())
         {
             order = Order::createWithPricer(pricer(), uid, *underlying);
@@ -238,6 +244,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             break;
         case AssetClass::Option:
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_OPTIONS);
+            setUnderlyingsPool(config().underlyingPoolCount(), ALL_EQUITIES);
 
             orderBook()->initialiseBookAtUnderlyings<Equity>();
             orderBook()->initialiseBookAtUnderlyings<Option>();

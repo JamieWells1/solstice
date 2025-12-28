@@ -81,7 +81,7 @@ class Pricer
     }
 
     template <typename T>
-    PricerDepOrderData compute(T& underlying)
+    PricerDepOrderData computeOrderData(T& underlying)
     {
         return std::visit(
             [this](auto&& underlying)

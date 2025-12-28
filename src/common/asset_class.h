@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <expected>
+#include <ostream>
 #include <random>
 #include <variant>
 #include <vector>
@@ -33,6 +34,11 @@ constexpr std::array<AssetClass, static_cast<size_t>(AssetClass::COUNT)> ALL_ASS
     AssetClass::Equity, AssetClass::Future, AssetClass::Option};
 
 const char* to_string(AssetClass cls);
+
+inline std::ostream& operator<<(std::ostream& os, const AssetClass& assetClass)
+{
+    return os << to_string(assetClass);
+}
 
 // ===================================================================
 // Enum: Equity
@@ -214,6 +220,11 @@ template <typename... Types>
 const char* to_string(const std::variant<Types...>& variant)
 {
     return std::visit([](const auto& underlying) { return to_string(underlying); }, variant);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Underlying& underlying)
+{
+    return os << to_string(underlying);
 }
 
 template <typename T, typename... Types>
