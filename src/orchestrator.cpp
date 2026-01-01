@@ -7,6 +7,7 @@
 #include <order.h>
 #include <order_book.h>
 #include <pricer.h>
+#include <types.h>
 
 #include <atomic>
 #include <iostream>
@@ -39,7 +40,7 @@ std::map<Underlying, std::mutex>& Orchestrator::underlyingMutexes() { return d_u
 
 std::queue<OrderPtr>& Orchestrator::orderProcessQueue() { return d_orderProcessQueue; }
 
-std::expected<std::vector<OrderPtr>, std::string> Orchestrator::generateOrders(int ordersGenerated)
+std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int ordersGenerated)
 {
     int uid = ordersGenerated;
 
@@ -64,7 +65,7 @@ std::expected<std::vector<OrderPtr>, std::string> Orchestrator::generateOrders(i
             return std::unexpected(underlying.error());
         }
 
-        std::expected<OrderPtr, std::string> order;
+        std::expected<OrderPtr, String> order;
         if (config().usePricer())
         {
             order = Order::createWithPricer(pricer(), uid, *underlying);
@@ -271,7 +272,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
     }
 }
 
-std::expected<std::pair<int, int>, std::string> Orchestrator::produceOrders()
+std::expected<std::pair<int, int>, String> Orchestrator::produceOrders()
 {
     d_done.store(false);
 
@@ -325,7 +326,7 @@ std::expected<std::pair<int, int>, std::string> Orchestrator::produceOrders()
     return std::pair{ordersExecuted.load(), ordersMatched.load()};
 }
 
-std::expected<void, std::string> Orchestrator::start(
+std::expected<void, String> Orchestrator::start(
     std::optional<broadcaster::Broadcaster>& broadcaster)
 {
     auto config = Config::instance();

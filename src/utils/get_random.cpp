@@ -1,15 +1,16 @@
 #include <get_random.h>
+#include <types.h>
 
 namespace solstice
 {
 
 std::random_device Random::rd;
 
-std::string Random::getRandomUid()
+String Random::getRandomUid()
 {
     static std::mt19937_64 rng(std::random_device{}());
     static std::uniform_int_distribution<uint64_t> dist;
-    std::string uid = std::to_string(dist(rng));
+    String uid = std::to_string(dist(rng));
 
     uid.insert(uid.begin(), 20 - uid.length(), '0');
 

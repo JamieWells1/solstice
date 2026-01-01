@@ -8,4 +8,5 @@ target_include_directories(config PRIVATE
     ${CMAKE_SOURCE_DIR}/src/common
     ${CMAKE_SOURCE_DIR}/src/enums
     ${CMAKE_SOURCE_DIR}/src/strategy
+    ${CMAKE_SOURCE_DIR}/src/utils
 )

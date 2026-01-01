@@ -4,9 +4,9 @@
 #include <asset_class.h>
 #include <log_level.h>
 #include <strategy.h>
+#include <types.h>
 
 #include <expected>
-#include <string>
 
 namespace solstice
 {
@@ -18,7 +18,7 @@ struct Config
     // Order Book
     // ===================================================================
 
-    static std::expected<Config, std::string> instance();
+    static std::expected<Config, String> instance();
 
     LogLevel logLevel() const;
     AssetClass assetClass() const;
@@ -58,7 +58,7 @@ struct Config
     // ===================================================================
     Config();
 
-    static std::expected<void, std::string> checkConfig(Config& config);
+    static std::expected<void, String> checkConfig(Config& config);
 
     // set sim log level
     LogLevel d_logLevel = LogLevel::DEBUG;

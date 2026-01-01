@@ -1,4 +1,5 @@
 #include <asset_class.h>
+#include <types.h>
 
 #include <ostream>
 #include <random>
@@ -24,7 +25,7 @@ AssetClass randomAssetClass()
     return static_cast<AssetClass>(dist(gen));
 }
 
-std::expected<Underlying, std::string> getUnderlying(AssetClass assetClass)
+std::expected<Underlying, String> getUnderlying(AssetClass assetClass)
 {
     switch (assetClass)
     {

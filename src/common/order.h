@@ -5,11 +5,11 @@
 #include <config.h>
 #include <market_side.h>
 #include <time_point.h>
+#include <types.h>
 
 #include <ctime>
 #include <expected>
 #include <memory>
-#include <string>
 
 namespace solstice::pricing
 {
@@ -22,14 +22,14 @@ namespace solstice
 class Order
 {
    public:
-    static std::expected<std::shared_ptr<Order>, std::string> create(int uid, Underlying underlying,
-                                                                     double price, int qnty,
-                                                                     MarketSide marketSide);
+    static std::expected<std::shared_ptr<Order>, String> create(int uid, Underlying underlying,
+                                                                double price, int qnty,
+                                                                MarketSide marketSide);
 
-    static std::expected<std::shared_ptr<Order>, std::string> createWithPricer(
+    static std::expected<std::shared_ptr<Order>, String> createWithPricer(
         std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying);
 
-    static std::expected<std::shared_ptr<Order>, std::string> createWithRandomValues(
+    static std::expected<std::shared_ptr<Order>, String> createWithRandomValues(
         Config d_config, int uid, Underlying underlying);
 
     int uid() const;
@@ -39,9 +39,9 @@ class Order
     int qnty() const;
     int outstandingQnty() const;
     MarketSide marketSide() const;
-    std::string marketSideString() const;
+    String marketSideString() const;
     TimePoint timeOrderPlaced() const;
-    std::expected<TimePoint, std::string> timeOrderFulfilled() const;
+    std::expected<TimePoint, String> timeOrderFulfilled() const;
     int outstandingQnty(int newQnty);
     bool matched() const;
     double matchedPrice() const;
@@ -53,14 +53,14 @@ class Order
     static int getRandomQnty(int minQnty, int maxQnty);
     static MarketSide getRandomMarketSide();
 
-   private:
+   protected:
     Order(int uid, Underlying underlying, double price, int qnty, MarketSide marketSide,
           TimePoint timeOrderPlaced);
 
-    static std::expected<void, std::string> validatePrice(const double price);
-    static std::expected<void, std::string> validateQnty(const int qnty);
-    static std::expected<void, std::string> validateOrderAttributes(double price, int qnty,
-                                                                    TimePoint& timeOrderPlaced);
+    static std::expected<void, String> validatePrice(const double price);
+    static std::expected<void, String> validateQnty(const int qnty);
+    static std::expected<void, String> validateOrderAttributes(double price, int qnty,
+                                                               TimePoint& timeOrderPlaced);
 
     int d_uid;
     Underlying d_underlying;

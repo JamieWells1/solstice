@@ -1,8 +1,9 @@
 #ifndef GETRANDOM_H
 #define GETRANDOM_H
 
+#include <types.h>
+
 #include <random>
-#include <string>
 
 namespace solstice
 {
@@ -10,7 +11,7 @@ namespace solstice
 class Random
 {
    public:
-    static std::string getRandomUid();
+    static String getRandomUid();
 
     static int getRandomInt(int min, int max);
     static double getRandomDouble(double min, double max);

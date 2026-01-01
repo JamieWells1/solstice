@@ -1,6 +1,8 @@
 #ifndef ASSET_CLASS_H
 #define ASSET_CLASS_H
 
+#include <types.h>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -182,7 +184,7 @@ using Underlying = std::variant<Equity, Future, Option>;
 
 AssetClass randomAssetClass();
 
-std::expected<Underlying, std::string> getUnderlying(AssetClass assetClass);
+std::expected<Underlying, String> getUnderlying(AssetClass assetClass);
 
 // ===================================================================
 // Template Functions
@@ -201,7 +203,7 @@ const char* to_string(T type)
 }
 
 template <typename T>
-const std::expected<T, std::string> randomUnderlying()
+const std::expected<T, String> randomUnderlying()
 {
     const auto& pool = d_underlyingsPool<T>;
     if (pool.empty())

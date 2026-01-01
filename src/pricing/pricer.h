@@ -7,6 +7,7 @@
 #include <get_random.h>
 #include <market_side.h>
 #include <option_price_data.h>
+#include <option_type.h>
 #include <order_book.h>
 #include <order_type.h>
 #include <pricing_utils.h>
@@ -31,6 +32,22 @@ struct PricerDepOrderData
     MarketSide d_marketSide;
     double d_price;
     double d_qnty;
+};
+
+struct PricerDepOptionData : public PricerDepOrderData
+{
+   public:
+    PricerDepOptionData(MarketSide d_marketSide, double d_price, int d_qnty, double strike,
+                        OptionType optionType, String expiry);
+
+    double strike() const;
+    OptionType optionType() const;
+    String expiry() const;
+
+   private:
+    double d_strike;
+    OptionType d_optionType;
+    String d_expiry;
 };
 
 class Pricer

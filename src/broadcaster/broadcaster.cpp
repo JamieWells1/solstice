@@ -3,6 +3,7 @@
 #include <config.h>
 #include <order.h>
 #include <transaction.h>
+#include <types.h>
 
 #include <algorithm>
 #include <chrono>
@@ -82,7 +83,7 @@ void WebSocketSession::onRead(beast::error_code ec, std::size_t bytes_transferre
                     beast::bind_front_handler(&WebSocketSession::onRead, shared_from_this()));
 }
 
-void WebSocketSession::send(std::shared_ptr<std::string const> const& message)
+void WebSocketSession::send(std::shared_ptr<String const> const& message)
 {
     net::post(d_ws.get_executor(),
               beast::bind_front_handler(
@@ -241,7 +242,7 @@ void Broadcaster::removeSession(std::shared_ptr<WebSocketSession> session)
                      d_sessions.end());
 }
 
-void Broadcaster::broadcast(const std::string& message)
+void Broadcaster::broadcast(const String& message)
 {
     {
         std::lock_guard<std::mutex> lock(d_queueMutex);
@@ -254,7 +255,7 @@ void Broadcaster::broadcastWorker()
 {
     while (true)
     {
-        std::string message;
+        String message;
         {
             std::unique_lock<std::mutex> lock(d_queueMutex);
             d_queueCV.wait(lock,
@@ -274,7 +275,7 @@ void Broadcaster::broadcastWorker()
 
         if (!message.empty())
         {
-            auto sharedMessage = std::make_shared<std::string>(std::move(message));
+            auto sharedMessage = std::make_shared<String>(std::move(message));
 
             std::lock_guard<std::mutex> lock(d_sessionsMutex);
 

@@ -5,6 +5,7 @@
 #include <order_book.h>
 #include <time_point.h>
 #include <transaction.h>
+#include <types.h>
 
 #include <atomic>
 #include <boost/asio/ip/tcp.hpp>
@@ -52,7 +53,7 @@ class Broadcaster
     void removeSession(std::shared_ptr<WebSocketSession> session);
 
    private:
-    void broadcast(const std::string& message);
+    void broadcast(const String& message);
     void run(unsigned short port);
     void broadcastWorker();  // Background thread for async broadcasting
 
@@ -64,7 +65,7 @@ class Broadcaster
     std::vector<std::weak_ptr<WebSocketSession>> d_sessions;
 
     // Message queue for async broadcasting
-    std::queue<std::string> d_messageQueue;
+    std::queue<String> d_messageQueue;
     std::mutex d_queueMutex;
     std::condition_variable d_queueCV;
     std::atomic<bool> d_stopBroadcasting{false};
@@ -83,7 +84,7 @@ class WebSocketSession : public std::enable_shared_from_this<WebSocketSession>
     ~WebSocketSession();
 
     void run();
-    void send(std::shared_ptr<std::string const> const& message);
+    void send(std::shared_ptr<String const> const& message);
 
    private:
     void onAccept(beast::error_code ec);
@@ -93,7 +94,7 @@ class WebSocketSession : public std::enable_shared_from_this<WebSocketSession>
     websocket::stream<beast::tcp_stream> d_ws;
     Broadcaster& d_broadcaster;
     beast::flat_buffer d_buffer;
-    std::vector<std::shared_ptr<std::string const>> d_writeQueue;
+    std::vector<std::shared_ptr<String const>> d_writeQueue;
 };
 
 class Listener : public std::enable_shared_from_this<Listener>

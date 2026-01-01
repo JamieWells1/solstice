@@ -1,11 +1,10 @@
 #include <truncate.h>
-
-#include <string>
+#include <types.h>
 
 namespace solstice::matching
 {
 
-std::string truncate(std::string str, size_t length)
+String truncate(String str, size_t length)
 {
     if (str.length() > length)
     {

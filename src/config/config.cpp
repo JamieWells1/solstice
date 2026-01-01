@@ -1,13 +1,12 @@
 #include <config.h>
-
-#include <format>
+#include <types.h>
 
 namespace solstice
 {
 
 Config::Config() {}
 
-std::expected<Config, std::string> Config::instance()
+std::expected<Config, String> Config::instance()
 {
     Config config;
 
@@ -45,7 +44,7 @@ void Config::broadcastInterval(int broadcastInterval) { d_broadcastInterval = br
 
 int Config::initialBalance() const { return d_initialBalance; }
 
-std::expected<void, std::string> Config::checkConfig(Config& config)
+std::expected<void, String> Config::checkConfig(Config& config)
 {
     auto values = {double(config.ordersToGenerate()), double(config.minQnty()),
                    double(config.maxQnty()),          double(config.minPrice()),

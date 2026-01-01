@@ -3,9 +3,11 @@
 #include <get_random.h>
 #include <market_side.h>
 #include <option_price_data.h>
+#include <option_type.h>
 #include <order_type.h>
 #include <pricer.h>
 #include <time_point.h>
+#include <types.h>
 
 #include <cmath>
 #include <unordered_map>
@@ -13,7 +15,7 @@
 namespace solstice::pricing
 {
 
-// risk-free rate for futures pricing
+// risk-free rate for derivatives pricing
 constexpr double r = 0.05;
 
 constexpr double baseOrderValue = 10000;
@@ -47,6 +49,8 @@ constexpr double MAX_VOL_ADJUSTMENT = 0.5;  // Maximum volatility adjustment
 constexpr int MIN_QUANTITY_THRESHOLD = 10;  // Minimum quantity threshold
 constexpr int MIN_QUANTITY = 1;             // Minimum order quantity
 
+// PricerDepOrderData
+
 PricerDepOrderData::PricerDepOrderData(MarketSide marketSide, double price, int qnty)
     : d_marketSide(marketSide), d_price(price), d_qnty(qnty)
 {
@@ -57,6 +61,25 @@ MarketSide PricerDepOrderData::marketSide() const { return d_marketSide; }
 double PricerDepOrderData::price() const { return d_price; }
 
 int PricerDepOrderData::qnty() const { return d_qnty; }
+
+// PricerDepOptionData
+
+PricerDepOptionData::PricerDepOptionData(MarketSide marketSide, double price, int qnty,
+                                         double strike, OptionType optionType, String expiry)
+    : PricerDepOrderData(marketSide, price, qnty),
+      d_strike(strike),
+      d_optionType(optionType),
+      d_expiry(expiry)
+{
+}
+
+double PricerDepOptionData::strike() const { return d_strike; }
+
+OptionType PricerDepOptionData::optionType() const { return d_optionType; }
+
+String PricerDepOptionData::expiry() const { return d_expiry; }
+
+// Pricer
 
 Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(orderBook)
 {
@@ -300,7 +323,7 @@ double Pricer::calculatePriceImpl(MarketSide mktSide, double lowestAsk, double h
 
 double timeToExpiry(Future fut)
 {
-    std::string name = to_string(fut);
+    String name = to_string(fut);
     CurrentDate dateNow = currentDate();
 
     int expiryMonth = monthToInt(name.substr(name.length() - 5, 3));

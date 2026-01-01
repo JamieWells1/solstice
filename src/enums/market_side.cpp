@@ -10,7 +10,7 @@ std::ostream& operator<<(std::ostream& os, const MarketSide& marketSide)
     if (marketSide == MarketSide::Bid)
         os << "Bid";
     else
-        os << "ask";
+        os << "Ask";
 
     return os;
 }

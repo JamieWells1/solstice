@@ -1,6 +1,7 @@
 #include <asset_class.h>
 #include <gtest/gtest.h>
 #include <order.h>
+#include <types.h>
 
 #include <algorithm>
 #include <type_traits>
@@ -13,7 +14,7 @@ namespace solstice
 
 TEST(AssetClassTests, AssetClassConvertsToString)
 {
-    ASSERT_TRUE(to_string(AssetClass::Equity) == std::string("Equity"));
+    ASSERT_TRUE(to_string(AssetClass::Equity) == String("Equity"));
 }
 
 TEST(AssetClassTests, ValidRandomAssetClass)
@@ -27,33 +28,33 @@ TEST(AssetClassTests, ValidRandomAssetClass)
 
 TEST(AssetClassTests, EquityConvertsToString)
 {
-    ASSERT_TRUE(std::string(to_string(Equity::AAPL)) == "AAPL");
-    ASSERT_TRUE(std::string(to_string(Equity::MSFT)) == "MSFT");
-    ASSERT_TRUE(std::string(to_string(Equity::GOOGL)) == "GOOGL");
+    ASSERT_TRUE((to_string(Equity::AAPL)) == "AAPL");
+    ASSERT_TRUE(String(to_string(Equity::MSFT)) == "MSFT");
+    ASSERT_TRUE(String(to_string(Equity::GOOGL)) == "GOOGL");
 }
 
 TEST(AssetClassTests, FutureConvertsToString)
 {
-    ASSERT_TRUE(std::string(to_string(Future::AAPL_MAR26)) == "AAPL_MAR26");
-    ASSERT_TRUE(std::string(to_string(Future::MSFT_JUN26)) == "MSFT_JUN26");
+    ASSERT_TRUE(String(to_string(Future::AAPL_MAR26)) == "AAPL_MAR26");
+    ASSERT_TRUE(String(to_string(Future::MSFT_JUN26)) == "MSFT_JUN26");
 }
 
 TEST(AssetClassTests, OptionConvertsToString)
 {
-    ASSERT_TRUE(std::string(to_string(Option::AAPL_DEC26_C)) == "AAPL_DEC26_C");
-    ASSERT_TRUE(std::string(to_string(Option::AAPL_JUN26_P)) == "AAPL_JUN26_P");
+    ASSERT_TRUE(String(to_string(Option::AAPL_DEC26_C)) == "AAPL_DEC26_C");
+    ASSERT_TRUE(String(to_string(Option::AAPL_JUN26_P)) == "AAPL_JUN26_P");
 }
 
 TEST(AssetClassTests, UnderlyingVariantConvertsToString)
 {
     Underlying eqVariant = Equity::AAPL;
-    ASSERT_TRUE(std::string(to_string(eqVariant)) == "AAPL");
+    ASSERT_TRUE(String(to_string(eqVariant)) == "AAPL");
 
     Underlying ftrVariant = Future::TSLA_DEC26;
-    ASSERT_TRUE(std::string(to_string(ftrVariant)) == "TSLA_DEC26");
+    ASSERT_TRUE(String(to_string(ftrVariant)) == "TSLA_DEC26");
 
     Underlying optVariant = Option::TSLA_DEC26_C;
-    ASSERT_TRUE(std::string(to_string(optVariant)) == "TSLA_DEC26_C");
+    ASSERT_TRUE(String(to_string(optVariant)) == "TSLA_DEC26_C");
 }
 
 TEST(AssetClassTests, UnderlyingVariantEquality)
