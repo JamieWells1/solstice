@@ -30,16 +30,16 @@ class Random
     static pricing::PricerDepOrderData generateOrderData(Config& cfg);
 
     // options values
-    static double getRandomOptionPrice(Config& cfg);
-    static double getRandomStrike(Config& cfg);
+    static double getRandomOptionPrice(const Config& cfg);
+    static double getRandomStrike(const Config& cfg);
     static OptionType getRandomOptionType();
-    static String getRandomExpiry(Config& cfg);
+    static String getRandomExpiry(const Config& cfg);
     static double getRandomDelta(OptionType optionType);
     static double getRandomGamma();
     static double getRandomTheta();
     static double getRandomVega();
-    static pricing::PricerDepOptionData generateOptionData(Config& cfg);
-    static pricing::Greeks generateGreeks(pricing::PricerDepOptionData& data);
+    static pricing::PricerDepOptionData generateOptionData(const Config& cfg);
+    static pricing::Greeks generateGreeks(const pricing::PricerDepOptionData& data);
 
    private:
     static std::random_device rd;

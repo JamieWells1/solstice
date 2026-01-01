@@ -5,8 +5,12 @@
 #include <dispatcher.h>
 #include <market_data.h>
 #include <strategy.h>
+#include <types.h>
 
 #include <expected>
+
+namespace solstice::strategy
+{
 
 class PyInterface
 {
@@ -18,5 +22,7 @@ class PyInterface
     template <typename T>
     std::expected<solstice::strategy::Report, String> orchestrate(RawMarketData& rawData);
 };
+
+}  // namespace solstice::strategy
 
 #endif  // PY_INTERFACE_H

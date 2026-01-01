@@ -5,8 +5,10 @@
 #include <pybind11/stl.h>
 #include <sharp_movements.h>
 #include <strategy.h>
+#include <types.h>
 
-#include <String>
+namespace solstice::strategy
+{
 
 namespace py = pybind11;
 
@@ -80,3 +82,5 @@ PYBIND11_MODULE(py_interface, m)
                  return result.value();
              });
 }
+
+}  // namespace solstice::strategy

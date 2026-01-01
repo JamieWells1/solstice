@@ -42,9 +42,9 @@ target_include_directories(solstice PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/enums
 )
 
-# enable/disable logging
+# comment out to enable/disable logging
 target_compile_definitions(solstice PRIVATE ENABLE_LOGGING)
 
-target_link_libraries(solstice PRIVATE orchestrator matching pricing broadcaster strategy common utils config enums)
+target_link_libraries(solstice PRIVATE orchestrator strategy)
 
 target_link_libraries(solstice PRIVATE ${Boost_LIBRARIES})

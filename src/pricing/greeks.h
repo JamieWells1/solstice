@@ -4,7 +4,7 @@
 namespace solstice::pricing
 {
 
-class Greeks
+struct Greeks
 {
    public:
     Greeks(double delta, double gamma, double theta, double vega);

@@ -110,7 +110,7 @@ pricing::PricerDepOrderData Random::generateOrderData(Config& cfg)
 // Options Values
 // ===================================================================
 
-double Random::getRandomOptionPrice(Config& cfg)
+double Random::getRandomOptionPrice(const Config& cfg)
 {
     double pct = getRandomDouble(PRICE_AS_PCT_OF_UNDERLYING_LOWER_BOUND,
                                  PRICE_AS_PCT_OF_UNDERLYING_UPPER_BOUND);
@@ -118,7 +118,7 @@ double Random::getRandomOptionPrice(Config& cfg)
     return std::round(price * 100.0) / 100.0;
 }
 
-double Random::getRandomStrike(Config& cfg)
+double Random::getRandomStrike(const Config& cfg)
 {
     double pct = getRandomDouble(STRIKE_AS_PCT_OF_UNDERLYING_LOWER_BOUND,
                                  STRIKE_AS_PCT_OF_UNDERLYING_UPPER_BOUND);
@@ -131,7 +131,7 @@ OptionType Random::getRandomOptionType()
     return getRandomBool() ? OptionType::Call : OptionType::Put;
 }
 
-String Random::getRandomExpiry(Config& cfg)
+String Random::getRandomExpiry(const Config& cfg)
 {
     int daysFromNow = getRandomInt(cfg.minExpiryDays(), cfg.maxExpiryDays());
 
@@ -156,24 +156,24 @@ double Random::getRandomTheta() { return -getRandomDouble(THETA_LOWER_BOUND, THE
 
 double Random::getRandomVega() { return getRandomDouble(VEGA_LOWER_BOUND, VEGA_UPPER_BOUND); }
 
-pricing::PricerDepOptionData generateOptionData(Config& cfg)
+pricing::PricerDepOptionData Random::generateOptionData(const Config& cfg)
 {
-    MarketSide mktSide = Random::getRandomMarketSide();
-    double qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    double price = Random::getRandomOptionPrice(cfg);
-    double strike = Random::getRandomStrike(cfg);
-    OptionType optionType = Random::getRandomOptionType();
-    String expiry = Random::getRandomExpiry(cfg);
+    MarketSide mktSide = getRandomMarketSide();
+    int qnty = getRandomQnty(cfg.minQnty(), cfg.maxQnty());
+    double price = getRandomOptionPrice(cfg);
+    double strike = getRandomStrike(cfg);
+    OptionType optionType = getRandomOptionType();
+    String expiry = getRandomExpiry(cfg);
 
     return pricing::PricerDepOptionData(mktSide, price, qnty, strike, optionType, expiry);
 }
 
-pricing::Greeks generateGreeks(pricing::PricerDepOptionData& data)
+pricing::Greeks Random::generateGreeks(const pricing::PricerDepOptionData& data)
 {
-    double d = Random::getRandomDelta(data.optionType());
-    double g = Random::getRandomGamma();
-    double t = Random::getRandomTheta();
-    double v = Random::getRandomVega();
+    double d = getRandomDelta(data.optionType());
+    double g = getRandomGamma();
+    double t = getRandomTheta();
+    double v = getRandomVega();
 
     return pricing::Greeks(d, g, t, v);
 }
