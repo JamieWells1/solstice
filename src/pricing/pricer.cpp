@@ -49,36 +49,6 @@ constexpr double MAX_VOL_ADJUSTMENT = 0.5;  // Maximum volatility adjustment
 constexpr int MIN_QUANTITY_THRESHOLD = 10;  // Minimum quantity threshold
 constexpr int MIN_QUANTITY = 1;             // Minimum order quantity
 
-// PricerDepOrderData
-
-PricerDepOrderData::PricerDepOrderData(MarketSide marketSide, double price, int qnty)
-    : d_marketSide(marketSide), d_price(price), d_qnty(qnty)
-{
-}
-
-MarketSide PricerDepOrderData::marketSide() const { return d_marketSide; }
-
-double PricerDepOrderData::price() const { return d_price; }
-
-int PricerDepOrderData::qnty() const { return d_qnty; }
-
-// PricerDepOptionData
-
-PricerDepOptionData::PricerDepOptionData(MarketSide marketSide, double price, int qnty,
-                                         double strike, OptionType optionType, String expiry)
-    : PricerDepOrderData(marketSide, price, qnty),
-      d_strike(strike),
-      d_optionType(optionType),
-      d_expiry(expiry)
-{
-}
-
-double PricerDepOptionData::strike() const { return d_strike; }
-
-OptionType PricerDepOptionData::optionType() const { return d_optionType; }
-
-String PricerDepOptionData::expiry() const { return d_expiry; }
-
 // Pricer
 
 Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(orderBook)
@@ -171,7 +141,7 @@ MarketSide Pricer::calculateMarketSideImpl(double probability)
     }
 
     // get random if random number doesn't fall within threshold
-    return Order::getRandomMarketSide();
+    return Random::getRandomMarketSide();
 }
 
 OrderType Pricer::getOrderType()
@@ -463,6 +433,18 @@ int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
 {
     // TODO
 }
+
+PricerDepOptionData computeOptionData(Underlying assetClass)
+{
+    // TODO
+}
+
+Greeks computeGreeks(PricerDepOptionData& data)
+{
+    // TODO
+}
+
+
 
 // ===================================================================
 // POST-PROCESSING

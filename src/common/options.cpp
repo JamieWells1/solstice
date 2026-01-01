@@ -1,6 +1,9 @@
+#include <asset_class.h>
+#include <greeks.h>
 #include <options.h>
 #include <order.h>
 #include <pricer.h>
+#include <time_point.h>
 #include <types.h>
 
 namespace solstice
@@ -40,22 +43,28 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
     return optionOrder;
 }
 
-std::expected<std::shared_ptr<Order>, String> Order::createWithPricer(
-    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
+std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPricer(
+    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying assetClass)
 {
-    pricing::PricerDepOptionData data = pricer->computeOrderData(underlying);
+    auto optionData = pricer->computeOptionData(assetClass);
+    auto greeks = pricer->computeGreeks(optionData);
 
-    return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
+    return OptionOrder::create(uid, assetClass, optionData.price(), optionData.qnty(),
+                               optionData.marketSide(), timeNow(), optionData.strike(),
+                               optionData.optionType(), optionData.expiry(), greeks.delta(),
+                               greeks.gamma(), greeks.theta(), greeks.vega());
 }
 
-std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Config cfg, int uid,
-                                                                            Underlying underlying)
+std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRandomValues(
+    Config cfg, int uid, Underlying underlying)
 {
-    int price = Order::getRandomPrice(cfg.minPrice(), cfg.maxPrice());
-    int qnty = Order::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    MarketSide mktSide = Order::getRandomMarketSide();
+    double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
+    int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
+    MarketSide mktSide = Random::getRandomMarketSide();
 
-    return Order::create(uid, underlying, price, qnty, mktSide);
+    double
+
+    return OptionOrder::create(uid, underlying, price, qnty, mktSide);
 }
 
 }  // namespace solstice

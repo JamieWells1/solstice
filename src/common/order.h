@@ -49,10 +49,6 @@ class Order
     void matched(bool isFulfilled);
     void matchedPrice(double matchedPrice);
 
-    static double getRandomPrice(double minPrice, double maxPrice);
-    static int getRandomQnty(int minQnty, int maxQnty);
-    static MarketSide getRandomMarketSide();
-
    protected:
     Order(int uid, Underlying underlying, double price, int qnty, MarketSide marketSide,
           TimePoint timeOrderPlaced);

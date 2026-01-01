@@ -53,17 +53,21 @@ std::expected<std::shared_ptr<Order>, String> Order::create(int uid, Underlying 
 std::expected<std::shared_ptr<Order>, String> Order::createWithPricer(
     std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
 {
-    pricing::PricerDepOrderData data = pricer->computeOrderData(underlying);
+    auto data = pricer->computeOrderData(underlying);
+    if (!data)
+    {
+        return std::unexpected(data.error());
+    }
 
-    return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
+    return Order::create(uid, underlying, data->price(), data->qnty(), data->marketSide());
 }
 
 std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Config cfg, int uid,
                                                                             Underlying underlying)
 {
-    int price = Order::getRandomPrice(cfg.minPrice(), cfg.maxPrice());
-    int qnty = Order::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    MarketSide mktSide = Order::getRandomMarketSide();
+    double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
+    int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
+    MarketSide mktSide = Random::getRandomMarketSide();
 
     return Order::create(uid, underlying, price, qnty, mktSide);
 }
@@ -123,28 +127,6 @@ std::expected<TimePoint, String> Order::timeOrderFulfilled() const
         return std::unexpected("Order has not been fulfilled yet\n");
     }
     return d_timeOrderFulfilled;
-}
-
-double Order::getRandomPrice(double minPrice, double maxPrice)
-{
-    return Random::getRandomDouble(minPrice, maxPrice);
-}
-
-int Order::getRandomQnty(int minQnty, int maxQnty)
-{
-    return Random::getRandomInt(minQnty, maxQnty);
-}
-
-MarketSide Order::getRandomMarketSide()
-{
-    if (Random::getRandomBool())
-    {
-        return MarketSide::Bid;
-    }
-    else
-    {
-        return MarketSide::Ask;
-    }
 }
 
 std::expected<void, String> Order::validatePrice(const double price)

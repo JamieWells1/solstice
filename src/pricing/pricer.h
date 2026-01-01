@@ -12,43 +12,14 @@
 #include <order_type.h>
 #include <pricing_utils.h>
 #include <time_point.h>
+#include <greeks.h>
+#include <pricing_data.h>
 
 #include <memory>
 #include <variant>
 
 namespace solstice::pricing
 {
-
-struct PricerDepOrderData
-{
-   public:
-    PricerDepOrderData(MarketSide d_marketSide, double d_price, int d_qnty);
-
-    MarketSide marketSide() const;
-    double price() const;
-    int qnty() const;
-
-   private:
-    MarketSide d_marketSide;
-    double d_price;
-    double d_qnty;
-};
-
-struct PricerDepOptionData : public PricerDepOrderData
-{
-   public:
-    PricerDepOptionData(MarketSide d_marketSide, double d_price, int d_qnty, double strike,
-                        OptionType optionType, String expiry);
-
-    double strike() const;
-    OptionType optionType() const;
-    String expiry() const;
-
-   private:
-    double d_strike;
-    OptionType d_optionType;
-    String d_expiry;
-};
 
 class Pricer
 {
@@ -97,9 +68,15 @@ class Pricer
         return currentDF;
     }
 
-    template <typename T>
-    PricerDepOrderData computeOrderData(T& underlying)
+    template <typename AssetClass>
+    std::expected<PricerDepOrderData, String> computeOrderData(AssetClass& underlying)
     {
+        if constexpr (std::is_same_v<AssetClass, Option>)
+        {
+            return std::unexpected(
+                "computeOrderData is not appropriate for options. Use computeOptionData instead.");
+        }
+
         return std::visit(
             [this](auto&& underlying)
             {
@@ -111,6 +88,10 @@ class Pricer
             },
             underlying);
     }
+
+    // options pricing
+    PricerDepOptionData computeOptionData(Underlying assetClass);
+    Greeks computeGreeks(PricerDepOptionData& data);
 
    public:
     EquityPriceData& getPriceData(Equity eq);

@@ -48,7 +48,7 @@ struct Config
     // Backtesting
     // ===================================================================
 
-    static const strategy::Strategy strategy = strategy::Strategy::SharpMovements;
+    static const auto strategy = strategy::Strategy::SharpMovements;
 
     int initialBalance() const;
 

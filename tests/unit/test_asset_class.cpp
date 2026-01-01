@@ -28,7 +28,7 @@ TEST(AssetClassTests, ValidRandomAssetClass)
 
 TEST(AssetClassTests, EquityConvertsToString)
 {
-    ASSERT_TRUE((to_string(Equity::AAPL)) == "AAPL");
+    ASSERT_TRUE(String(to_string(Equity::AAPL)) == "AAPL");
     ASSERT_TRUE(String(to_string(Equity::MSFT)) == "MSFT");
     ASSERT_TRUE(String(to_string(Equity::GOOGL)) == "GOOGL");
 }

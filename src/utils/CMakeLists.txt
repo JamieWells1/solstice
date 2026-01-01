@@ -5,4 +5,9 @@ add_library(utils STATIC
     types.cpp
 )
 
-target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(utils
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/src/enums
+        ${CMAKE_SOURCE_DIR}/src/pricing
+        ${CMAKE_SOURCE_DIR}/src/config)
