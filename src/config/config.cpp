@@ -1,6 +1,8 @@
 #include <config.h>
 #include <types.h>
 
+#include <format>
+
 namespace solstice
 {
 
