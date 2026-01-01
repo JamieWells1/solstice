@@ -11,3 +11,5 @@ target_include_directories(utils
         ${CMAKE_SOURCE_DIR}/src/enums
         ${CMAKE_SOURCE_DIR}/src/pricing
         ${CMAKE_SOURCE_DIR}/src/config)
+
+target_link_libraries(utils PUBLIC pricing config enums)
