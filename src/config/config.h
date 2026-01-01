@@ -28,6 +28,8 @@ struct Config
     int maxQnty() const;
     double minPrice() const;
     double maxPrice() const;
+    int minExpiryDays() const;
+    int maxExpiryDays() const;
     bool usePricer() const;
     bool enableBroadcaster() const;
     int broadcastInterval() const;
@@ -40,6 +42,8 @@ struct Config
     void maxQnty(int qnty);
     void minPrice(double price);
     void maxPrice(double price);
+    void minExpiryDays(int days);
+    void maxExpiryDays(int days);
     void usePricer(bool usePricer);
     void enableBroadcaster(bool enableBroadcaster);
     void broadcastInterval(int broadcastInterval);
@@ -84,6 +88,12 @@ struct Config
 
     // maximum price for randomly generated orders (only applicable if d_usePricer = false)
     double d_maxPrice = 10.0;
+
+    // minimum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    int d_minExpiryDays = 7;
+
+    // maximum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    int d_maxExpiryDays = 90;
 
     // enable use of pricer when generating orders
     bool d_usePricer = false;

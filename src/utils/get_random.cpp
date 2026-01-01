@@ -1,10 +1,15 @@
+#include <config.h>
 #include <get_random.h>
-#include <types.h>
+#include <market_side.h>
+#include <option_type.h>
 #include <pricing_data.h>
+#include <types.h>
+
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-#include <config.h>
+
+#include "greeks.h"
 
 namespace solstice
 {
@@ -92,30 +97,32 @@ MarketSide Random::getRandomMarketSide()
     }
 }
 
-pricing::PricerDepOrderData generateOrderData(Config cfg)
+pricing::PricerDepOrderData Random::generateOrderData(Config& cfg)
 {
     double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
     int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
     MarketSide mktSide = Random::getRandomMarketSide();
+
+    return pricing::PricerDepOrderData(mktSide, price, qnty);
 }
 
 // ===================================================================
 // Options Values
 // ===================================================================
 
-double Random::getRandomOptionPrice(double underlyingPrice)
+double Random::getRandomOptionPrice(Config& cfg)
 {
     double pct = getRandomDouble(PRICE_AS_PCT_OF_UNDERLYING_LOWER_BOUND,
                                  PRICE_AS_PCT_OF_UNDERLYING_UPPER_BOUND);
-    double price = underlyingPrice * pct;
+    double price = ((cfg.minPrice() + cfg.maxPrice()) / 2) * pct;
     return std::round(price * 100.0) / 100.0;
 }
 
-double Random::getRandomStrike(double underlyingPrice)
+double Random::getRandomStrike(Config& cfg)
 {
     double pct = getRandomDouble(STRIKE_AS_PCT_OF_UNDERLYING_LOWER_BOUND,
                                  STRIKE_AS_PCT_OF_UNDERLYING_UPPER_BOUND);
-    double strike = underlyingPrice * pct;
+    double strike = ((cfg.minPrice() + cfg.maxPrice()) / 2) * pct;
     return std::round(strike * 100.0) / 100.0;
 }
 
@@ -124,9 +131,9 @@ OptionType Random::getRandomOptionType()
     return getRandomBool() ? OptionType::Call : OptionType::Put;
 }
 
-String Random::getRandomExpiry(int minDays, int maxDays)
+String Random::getRandomExpiry(Config& cfg)
 {
-    int daysFromNow = getRandomInt(minDays, maxDays);
+    int daysFromNow = getRandomInt(cfg.minExpiryDays(), cfg.maxExpiryDays());
 
     auto now = std::chrono::system_clock::now();
     auto expiry = now + std::chrono::hours(24 * daysFromNow);
@@ -148,5 +155,27 @@ double Random::getRandomGamma() { return getRandomDouble(GAMMA_LOWER_BOUND, GAMM
 double Random::getRandomTheta() { return -getRandomDouble(THETA_LOWER_BOUND, THETA_UPPER_BOUND); }
 
 double Random::getRandomVega() { return getRandomDouble(VEGA_LOWER_BOUND, VEGA_UPPER_BOUND); }
+
+pricing::PricerDepOptionData generateOptionData(Config& cfg)
+{
+    MarketSide mktSide = Random::getRandomMarketSide();
+    double qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
+    double price = Random::getRandomOptionPrice(cfg);
+    double strike = Random::getRandomStrike(cfg);
+    OptionType optionType = Random::getRandomOptionType();
+    String expiry = Random::getRandomExpiry(cfg);
+
+    return pricing::PricerDepOptionData(mktSide, price, qnty, strike, optionType, expiry);
+}
+
+pricing::Greeks generateGreeks(pricing::PricerDepOptionData& data)
+{
+    double d = Random::getRandomDelta(data.optionType());
+    double g = Random::getRandomGamma();
+    double t = Random::getRandomTheta();
+    double v = Random::getRandomVega();
+
+    return pricing::Greeks(d, g, t, v);
+}
 
 }  // namespace solstice

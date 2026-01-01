@@ -58,13 +58,12 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRandomValues(
     Config cfg, int uid, Underlying underlying)
 {
-    double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
-    int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    MarketSide mktSide = Random::getRandomMarketSide();
+    auto data = Random::generateOptionData(cfg);
+    auto greeks = Random::generateGreeks(data);
 
-    double
-
-    return OptionOrder::create(uid, underlying, price, qnty, mktSide);
+    return OptionOrder::create(uid, underlying, data.price(), data.qnty(), data.marketSide(),
+                               timeNow(), data.strike(), data.optionType(), data.expiry(),
+                               greeks.delta(), greeks.gamma(), greeks.theta(), greeks.vega());
 }
 
 }  // namespace solstice

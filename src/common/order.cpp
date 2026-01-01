@@ -9,12 +9,6 @@
 #include <memory>
 #include <ostream>
 
-using namespace solstice;
-
-// ==================
-// Order class
-// ==================
-
 namespace solstice
 {
 
@@ -65,11 +59,8 @@ std::expected<std::shared_ptr<Order>, String> Order::createWithPricer(
 std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Config cfg, int uid,
                                                                             Underlying underlying)
 {
-    double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
-    int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    MarketSide mktSide = Random::getRandomMarketSide();
-
-    return Order::create(uid, underlying, price, qnty, mktSide);
+    auto data = Random::generateOrderData(cfg);
+    return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
 }
 
 // getters
