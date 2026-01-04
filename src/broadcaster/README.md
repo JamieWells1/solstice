@@ -87,3 +87,4 @@ Surprisingly, the 'throughput tax' was on the broadcaster being enabled rather t
 
 Plotting this on a graph and performing a `log(x+1)` shift on the data points, we can see a clear logarithmic relationship relationship between latency and number of connections, with the equation being `y = 4.42972 + 0.714627(ln(x))`, and an `R²` value of `0.975`.
 
+![Broadcaster Latency Line Graph](/assets/v2.2.0_broadcaster_latency.png)
