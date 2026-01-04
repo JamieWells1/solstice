@@ -4,9 +4,9 @@
 #include <asset_class.h>
 #include <log_level.h>
 #include <strategy.h>
+#include <types.h>
 
 #include <expected>
-#include <string>
 
 namespace solstice
 {
@@ -18,7 +18,7 @@ struct Config
     // Order Book
     // ===================================================================
 
-    static std::expected<Config, std::string> instance();
+    static std::expected<Config, String> instance();
 
     LogLevel logLevel() const;
     AssetClass assetClass() const;
@@ -28,6 +28,8 @@ struct Config
     int maxQnty() const;
     double minPrice() const;
     double maxPrice() const;
+    int minExpiryDays() const;
+    int maxExpiryDays() const;
     bool usePricer() const;
     bool enableBroadcaster() const;
     int broadcastInterval() const;
@@ -40,6 +42,8 @@ struct Config
     void maxQnty(int qnty);
     void minPrice(double price);
     void maxPrice(double price);
+    void minExpiryDays(int days);
+    void maxExpiryDays(int days);
     void usePricer(bool usePricer);
     void enableBroadcaster(bool enableBroadcaster);
     void broadcastInterval(int broadcastInterval);
@@ -48,9 +52,9 @@ struct Config
     // Backtesting
     // ===================================================================
 
-    static const strategy::Strategy strategy = strategy::Strategy::SharpMovements;
+    static const auto strategy = strategy::Strategy::SharpMovements;
 
-    int initialBalance();
+    int initialBalance() const;
 
    private:
     // ===================================================================
@@ -58,16 +62,17 @@ struct Config
     // ===================================================================
     Config();
 
-    static std::expected<void, std::string> checkConfig(Config& config);
+    static std::expected<void, String> checkConfig(Config& config);
 
     // set sim log level
     LogLevel d_logLevel = LogLevel::DEBUG;
 
     // asset class to use in sim
-    AssetClass d_assetClass = AssetClass::Equity;
+    // if set to option, an underlying equity will be generated for each generated option
+    AssetClass d_assetClass = AssetClass::Option;
 
     // number of orders to generate in sim -- set to -1 for infinite orders
-    int d_ordersToGenerate = 10000;
+    int d_ordersToGenerate = 100;
 
     // how many variations of underlying asset class to use in sim (e.g. AAPL, MSFT etc)
     int d_underlyingPoolCount = 10;
@@ -84,8 +89,14 @@ struct Config
     // maximum price for randomly generated orders (only applicable if d_usePricer = false)
     double d_maxPrice = 10.0;
 
+    // minimum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    int d_minExpiryDays = 7;
+
+    // maximum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    int d_maxExpiryDays = 90;
+
     // enable use of pricer when generating orders
-    bool d_usePricer = true;
+    bool d_usePricer = false;
 
     // enable outbound LAN web broadcaster
     bool d_enableBroadcaster = false;

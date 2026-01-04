@@ -9,13 +9,7 @@ target_link_libraries(tests
     gtest_main
     ${Boost_LIBRARIES}
     orchestrator
-    matching
-    pricing
     strategy
-    common
-    utils
-    enums
-    config
 )
 
 include(GoogleTest)

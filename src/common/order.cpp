@@ -3,16 +3,11 @@
 #include <market_side.h>
 #include <order.h>
 #include <pricer.h>
+#include <types.h>
 
 #include <format>
 #include <memory>
 #include <ostream>
-
-using namespace solstice;
-
-// ==================
-// Order class
-// ==================
 
 namespace solstice
 {
@@ -28,11 +23,12 @@ Order::Order(int uid, Underlying underlying, double price, int qnty, MarketSide 
 {
     d_matched = false;
     d_outstandingQnty = qnty;
+    d_assetClass = underlying.index();
 }
 
-std::expected<std::shared_ptr<Order>, std::string> Order::create(int uid, Underlying underlying,
-                                                                 double price, int qnty,
-                                                                 MarketSide marketSide)
+std::expected<std::shared_ptr<Order>, String> Order::create(int uid, Underlying underlying,
+                                                            double price, int qnty,
+                                                            MarketSide marketSide)
 {
     TimePoint timeOrderPlaced = timeNow();
 
@@ -48,22 +44,23 @@ std::expected<std::shared_ptr<Order>, std::string> Order::create(int uid, Underl
     return order;
 }
 
-std::expected<std::shared_ptr<Order>, std::string> Order::createWithPricer(
+std::expected<std::shared_ptr<Order>, String> Order::createWithPricer(
     std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
 {
-    pricing::PricerDepOrderData data = pricer->compute(underlying);
+    auto data = pricer->computeOrderData(underlying);
+    if (!data)
+    {
+        return std::unexpected(data.error());
+    }
 
-    return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
+    return Order::create(uid, underlying, data->price(), data->qnty(), data->marketSide());
 }
 
-std::expected<std::shared_ptr<Order>, std::string> Order::createWithRandomValues(
-    Config cfg, int uid, Underlying underlying)
+std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Config cfg, int uid,
+                                                                            Underlying underlying)
 {
-    int price = Order::getRandomPrice(cfg.minPrice(), cfg.maxPrice());
-    int qnty = Order::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    MarketSide mktSide = Order::getRandomMarketSide();
-
-    return Order::create(uid, underlying, price, qnty, mktSide);
+    auto data = Random::generateOrderData(cfg);
+    return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
 }
 
 // getters
@@ -71,6 +68,8 @@ std::expected<std::shared_ptr<Order>, std::string> Order::createWithRandomValues
 int Order::uid() const { return d_uid; }
 
 Underlying Order::underlying() const { return d_underlying; }
+
+AssetClass Order::assetClass() const { return static_cast<AssetClass>(d_underlying.index()); }
 
 double Order::price() const
 {
@@ -94,7 +93,7 @@ int Order::outstandingQnty(int newOutstandingQnty)
 
 MarketSide Order::marketSide() const { return d_marketSide; }
 
-std::string Order::marketSideString() const
+String Order::marketSideString() const
 {
     return d_marketSide == solstice::MarketSide::Bid ? "Bid" : "ask";
 }
@@ -111,7 +110,7 @@ void Order::matched(bool isFulfilled) { d_matched = isFulfilled; }
 
 void Order::matchedPrice(double matchedPrice) { d_matchedPrice = matchedPrice; }
 
-std::expected<TimePoint, std::string> Order::timeOrderFulfilled() const
+std::expected<TimePoint, String> Order::timeOrderFulfilled() const
 {
     // Cannot return time of fulfillment if fulfillment hasn't yet occured
     if (!d_matched)
@@ -121,29 +120,7 @@ std::expected<TimePoint, std::string> Order::timeOrderFulfilled() const
     return d_timeOrderFulfilled;
 }
 
-double Order::getRandomPrice(double minPrice, double maxPrice)
-{
-    return Random::getRandomDouble(minPrice, maxPrice);
-}
-
-int Order::getRandomQnty(int minQnty, int maxQnty)
-{
-    return Random::getRandomInt(minQnty, maxQnty);
-}
-
-MarketSide Order::getRandomMarketSide()
-{
-    if (Random::getRandomBool())
-    {
-        return MarketSide::Bid;
-    }
-    else
-    {
-        return MarketSide::Ask;
-    }
-}
-
-std::expected<void, std::string> Order::validatePrice(const double price)
+std::expected<void, String> Order::validatePrice(const double price)
 {
     if (price < 0)
     {
@@ -153,7 +130,7 @@ std::expected<void, std::string> Order::validatePrice(const double price)
     return {};
 }
 
-std::expected<void, std::string> Order::validateQnty(const int qnty)
+std::expected<void, String> Order::validateQnty(const int qnty)
 {
     if (qnty < 0)
     {
@@ -163,8 +140,8 @@ std::expected<void, std::string> Order::validateQnty(const int qnty)
     return {};
 }
 
-std::expected<void, std::string> Order::validateOrderAttributes(double price, int qnty,
-                                                                TimePoint& timeOrderPlaced)
+std::expected<void, String> Order::validateOrderAttributes(double price, int qnty,
+                                                           TimePoint& timeOrderPlaced)
 {
     auto validPrice = Order::validatePrice(price);
     auto validQnty = Order::validateQnty(qnty);

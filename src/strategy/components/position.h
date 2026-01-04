@@ -12,11 +12,11 @@ struct Position
    public:
     Position(PositionType posType, double posSize, double entryPrice);
 
-    PositionType posType();
-    double posSize();
-    double entryPrice();
-    double exitPrice();
-    double active();
+    PositionType posType() const;
+    double posSize() const;
+    double entryPrice() const;
+    double exitPrice() const;
+    double active() const;
 
     void posSize(int newPosSize);
     void entryPrice(double newEntryPrice);

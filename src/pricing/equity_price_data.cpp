@@ -3,16 +3,16 @@
 namespace solstice::pricing
 {
 
-Equity EquityPriceData::underlying() { return d_equity; }
-double EquityPriceData::lastPrice() { return d_lastPrice; }
-double EquityPriceData::highestBid() { return d_highestBid; }
-double EquityPriceData::lowestAsk() { return d_lowestAsk; }
-double EquityPriceData::demandFactor() { return d_demandFactor; }
-double EquityPriceData::movingAverage() { return d_movingAverage; }
-int EquityPriceData::executions() { return d_executions; }
-int EquityPriceData::maRange() { return d_maRange; }
-double EquityPriceData::pricesSum() { return d_pricesSum; }
-double EquityPriceData::pricesSumSquared() { return d_pricesSumSquared; }
+Equity EquityPriceData::underlying() const { return d_equity; }
+double EquityPriceData::lastPrice() const { return d_lastPrice; }
+double EquityPriceData::highestBid() const { return d_highestBid; }
+double EquityPriceData::lowestAsk() const { return d_lowestAsk; }
+double EquityPriceData::demandFactor() const { return d_demandFactor; }
+double EquityPriceData::movingAverage() const { return d_movingAverage; }
+int EquityPriceData::executions() const { return d_executions; }
+int EquityPriceData::maRange() const { return d_maRange; }
+double EquityPriceData::pricesSum() const { return d_pricesSum; }
+double EquityPriceData::pricesSumSquared() const { return d_pricesSumSquared; }
 
 void EquityPriceData::underlying(Equity newUnderlying) { d_equity = newUnderlying; }
 void EquityPriceData::lastPrice(double newLastPrice) { d_lastPrice = newLastPrice; }
@@ -27,7 +27,7 @@ void EquityPriceData::pricesSumSquared(double newPricesSumSq)
     d_pricesSumSquared = newPricesSumSq;
 }
 
-double EquityPriceData::standardDeviation(EquityPriceData& data)
+double EquityPriceData::standardDeviation(const EquityPriceData& data) const
 {
     double n = data.executions();
     if (n < 2) return 0;

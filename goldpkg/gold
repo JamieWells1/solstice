@@ -126,7 +126,9 @@ def cmd_test():
     build()
 
     test_dir = os.path.join(PROJECT_ROOT, BUILD_DIR, "bin")
-    test_binaries = sorted(glob.glob(os.path.join(test_dir, "*")))
+    all_binaries = glob.glob(os.path.join(test_dir, "*"))
+    # Only run the "tests" binary (gtest), exclude standalone test utilities like test_broadcaster
+    test_binaries = sorted([b for b in all_binaries if os.path.basename(b) == "tests"])
 
     if not test_binaries:
         log_error(f"No test binaries starting with 'test_' found in {test_dir}")

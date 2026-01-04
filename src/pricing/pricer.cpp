@@ -2,9 +2,12 @@
 #include <config.h>
 #include <get_random.h>
 #include <market_side.h>
+#include <option_price_data.h>
+#include <option_type.h>
 #include <order_type.h>
 #include <pricer.h>
 #include <time_point.h>
+#include <types.h>
 
 #include <cmath>
 #include <unordered_map>
@@ -12,7 +15,7 @@
 namespace solstice::pricing
 {
 
-// risk-free rate for futures pricing
+// risk-free rate for derivatives pricing
 constexpr double r = 0.05;
 
 constexpr double baseOrderValue = 10000;
@@ -46,23 +49,14 @@ constexpr double MAX_VOL_ADJUSTMENT = 0.5;  // Maximum volatility adjustment
 constexpr int MIN_QUANTITY_THRESHOLD = 10;  // Minimum quantity threshold
 constexpr int MIN_QUANTITY = 1;             // Minimum order quantity
 
-PricerDepOrderData::PricerDepOrderData(MarketSide marketSide, double price, int qnty)
-    : d_marketSide(marketSide), d_price(price), d_qnty(qnty)
-{
-}
-
-MarketSide PricerDepOrderData::marketSide() { return d_marketSide; }
-
-double PricerDepOrderData::price() { return d_price; }
-
-int PricerDepOrderData::qnty() { return d_qnty; }
+// Pricer
 
 Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(orderBook)
 {
     d_seedPrice = generateSeedPrice();
 }
 
-void Pricer::initialisePricerEquities()
+void Pricer::addEquitiesToDataMap()
 {
     for (const auto& underlying : underlyingsPool<Equity>())
     {
@@ -70,11 +64,19 @@ void Pricer::initialisePricerEquities()
     }
 }
 
-void Pricer::initialisePricerFutures()
+void Pricer::addFuturesToDataMap()
 {
     for (const auto& underlying : underlyingsPool<Future>())
     {
         d_futureDataMap.emplace(underlying, FuturePriceData(underlying));
+    }
+}
+
+void Pricer::addOptionsToDataMap()
+{
+    for (const auto& underlying : underlyingsPool<Option>())
+    {
+        d_optionDataMap.emplace(underlying, OptionPriceData(underlying));
     }
 }
 
@@ -92,6 +94,8 @@ EquityPriceData& Pricer::getPriceData(Equity eq) { return d_equityDataMap.at(eq)
 
 FuturePriceData& Pricer::getPriceData(Future fut) { return d_futureDataMap.at(fut); }
 
+OptionPriceData& Pricer::getPriceData(Option opt) { return d_optionDataMap.at(opt); }
+
 MarketSide Pricer::calculateMarketSide(Equity eq)
 {
     EquityPriceData data = getPriceData(eq);
@@ -103,6 +107,14 @@ MarketSide Pricer::calculateMarketSide(Equity eq)
 MarketSide Pricer::calculateMarketSide(Future fut)
 {
     FuturePriceData data = getPriceData(fut);
+    double p = data.demandFactor() * data.demandFactor();
+
+    return calculateMarketSideImpl(p);
+}
+
+MarketSide Pricer::calculateMarketSide(Option opt)
+{
+    OptionPriceData data = getPriceData(opt);
     double p = data.demandFactor() * data.demandFactor();
 
     return calculateMarketSideImpl(p);
@@ -129,7 +141,7 @@ MarketSide Pricer::calculateMarketSideImpl(double probability)
     }
 
     // get random if random number doesn't fall within threshold
-    return Order::getRandomMarketSide();
+    return Random::getRandomMarketSide();
 }
 
 OrderType Pricer::getOrderType()
@@ -281,7 +293,7 @@ double Pricer::calculatePriceImpl(MarketSide mktSide, double lowestAsk, double h
 
 double timeToExpiry(Future fut)
 {
-    std::string name = to_string(fut);
+    String name = to_string(fut);
     CurrentDate dateNow = currentDate();
 
     int expiryMonth = monthToInt(name.substr(name.length() - 5, 3));
@@ -378,6 +390,11 @@ double Pricer::calculatePrice(Future fut, MarketSide mktSide)
     return calculatePriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
 }
 
+double Pricer::calculatePrice(Option opt, MarketSide mktSide)
+{
+    // TODO
+}
+
 int Pricer::calculateQnty(Equity eq, MarketSide mktSide, double price)
 {
     EquityPriceData data = getPriceData(eq);
@@ -410,6 +427,21 @@ int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
         return Random::getRandomInt(MIN_QUANTITY, MIN_QUANTITY_THRESHOLD);
 
     return Random::getRandomInt(MIN_QUANTITY, maxQuantity);
+}
+
+int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
+{
+    // TODO
+}
+
+PricerDepOptionData computeOptionData(Underlying assetClass)
+{
+    // TODO
+}
+
+Greeks computeGreeks(PricerDepOptionData& data)
+{
+    // TODO
 }
 
 // ===================================================================

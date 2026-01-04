@@ -5,11 +5,11 @@
 #include <order_book.h>
 #include <transaction.h>
 #include <truncate.h>
+#include <types.h>
 
 #include <cstddef>
 #include <deque>
 #include <memory>
-#include <string>
 
 namespace solstice::matching
 {
@@ -47,7 +47,7 @@ std::deque<OrderPtr>& OrderBook::ordersDequeAtPrice(OrderPtr order)
                                                     : book.asks[order->price()];
 }
 
-std::expected<std::reference_wrapper<std::deque<OrderPtr>>, std::string>
+std::expected<std::reference_wrapper<std::deque<OrderPtr>>, String>
 OrderBook::getPriceLevelOppositeOrders(OrderPtr order, double priceToUse)
 {
     auto it = d_activeOrders.find(order->underlying());
@@ -95,7 +95,7 @@ std::map<double, std::deque<OrderPtr>>& OrderBook::oppositeMarketSidePriceLevelM
     return (order->marketSide() == MarketSide::Bid) ? book.asks : book.bids;
 }
 
-std::expected<std::reference_wrapper<BidPricesAtPriceLevel>, std::string>
+std::expected<std::reference_wrapper<BidPricesAtPriceLevel>, String>
 OrderBook::getBidPricesAtPriceLevel(OrderPtr order)
 {
     auto it = d_activeOrders.find(order->underlying());
@@ -115,7 +115,7 @@ std::set<double, std::greater<double>>& OrderBook::setBidPricesAtPriceLevel(Orde
     return bidsSet;
 }
 
-std::expected<std::reference_wrapper<askPricesAtPriceLevel>, std::string>
+std::expected<std::reference_wrapper<askPricesAtPriceLevel>, String>
 OrderBook::getaskPricesAtPriceLevel(OrderPtr order)
 {
     auto it = d_activeOrders.find(order->underlying());
@@ -135,7 +135,7 @@ std::set<double, std::less<double>>& OrderBook::setAskPricesAtPriceLevel(OrderPt
     return asksSet;
 }
 
-const std::expected<double, std::string> OrderBook::getBestPrice(OrderPtr orderToMatch)
+const std::expected<double, String> OrderBook::getBestPrice(OrderPtr orderToMatch)
 {
     if (orderToMatch->marketSide() == MarketSide::Bid)
     {

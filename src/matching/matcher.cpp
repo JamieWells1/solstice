@@ -2,11 +2,11 @@
 #include <matcher.h>
 #include <order.h>
 #include <order_book.h>
+#include <types.h>
 
 #include <expected>
 #include <iostream>
 #include <memory>
-#include <string>
 
 namespace solstice::matching
 {
@@ -46,21 +46,20 @@ double Matcher::getDealPrice(OrderPtr firstOrder, OrderPtr secondOrder) const
     return bid->uid() > ask->uid() ? ask->price() : bid->price();
 }
 
-std::string Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matchedOrder,
-                                        double matchedPrice) const
+String Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matchedOrder,
+                                   double matchedPrice) const
 {
     const double dealPrice = getDealPrice(incomingOrder, matchedOrder);
 
     std::ostringstream oss;
 
     // Incoming order
-    oss << "Order: " << incomingOrder->uid()
+    oss << "Order: " << incomingOrder->uid() << " | Asset class: " << incomingOrder->assetClass()
         << " | Status: Matched"
         << " | Matched with: " << matchedOrder->uid()
         << " | Side: " << incomingOrder->marketSideString()
-        << " | Ticker: " << to_string(incomingOrder->underlying())
-        << " | Price: $" << incomingOrder->price()
-        << " | Qnty: " << incomingOrder->qnty()
+        << " | Ticker: " << to_string(incomingOrder->underlying()) << " | Price: $"
+        << incomingOrder->price() << " | Qnty: " << incomingOrder->qnty()
         << " | Remaining Qnty: " << incomingOrder->outstandingQnty();
 
     if (incomingOrder->outstandingQnty() == 0)
@@ -70,13 +69,12 @@ std::string Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matched
     oss << "\n";
 
     // Matched order
-    oss << "Order: " << matchedOrder->uid()
+    oss << "Order: " << matchedOrder->uid() << " | Asset class: " << incomingOrder->assetClass()
         << " | Status: Matched"
         << " | Matched with: " << incomingOrder->uid()
         << " | Side: " << matchedOrder->marketSideString()
-        << " | Ticker: " << to_string(matchedOrder->underlying())
-        << " | Price: $" << matchedOrder->price()
-        << " | Qnty: " << matchedOrder->qnty()
+        << " | Ticker: " << to_string(matchedOrder->underlying()) << " | Price: $"
+        << matchedOrder->price() << " | Qnty: " << matchedOrder->qnty()
         << " | Remaining Qnty: " << matchedOrder->outstandingQnty();
 
     if (matchedOrder->outstandingQnty() == 0)
@@ -88,8 +86,8 @@ std::string Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matched
     return oss.str();
 }
 
-std::expected<std::string, std::string> Matcher::matchOrder(OrderPtr incomingOrder,
-                                                            double orderMatchingPrice) const
+std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
+                                                  double orderMatchingPrice) const
 {
     double bestPrice = orderMatchingPrice;
 
@@ -133,8 +131,7 @@ std::expected<std::string, std::string> Matcher::matchOrder(OrderPtr incomingOrd
         incomingOrder->outstandingQnty(incomingOrder->outstandingQnty() - transactionQnty);
         bestOrder->outstandingQnty(0);
 
-        const std::string partialMatchResult =
-            matchSuccessOutput(incomingOrder, bestOrder, bestPrice);
+        const String partialMatchResult = matchSuccessOutput(incomingOrder, bestOrder, bestPrice);
 
         d_orderBook->markOrderAsFulfilled(bestOrder, bestPrice);
 
@@ -175,8 +172,7 @@ std::expected<std::string, std::string> Matcher::matchOrder(OrderPtr incomingOrd
         bestOrder->outstandingQnty(0);
         incomingOrder->outstandingQnty(0);
 
-        const std::string& finalMatchResult =
-            matchSuccessOutput(incomingOrder, bestOrder, bestPrice);
+        const String& finalMatchResult = matchSuccessOutput(incomingOrder, bestOrder, bestPrice);
 
         d_orderBook->markOrderAsFulfilled(bestOrder, bestPrice);
         d_orderBook->markOrderAsFulfilled(incomingOrder, bestPrice);
@@ -190,8 +186,7 @@ std::expected<std::string, std::string> Matcher::matchOrder(OrderPtr incomingOrd
         bestOrder->outstandingQnty(bestOrder->outstandingQnty() - transactionQnty);
         incomingOrder->outstandingQnty(0);
 
-        const std::string& finalMatchResult =
-            matchSuccessOutput(incomingOrder, bestOrder, bestPrice);
+        const String& finalMatchResult = matchSuccessOutput(incomingOrder, bestOrder, bestPrice);
 
         d_orderBook->markOrderAsFulfilled(incomingOrder, bestPrice);
 

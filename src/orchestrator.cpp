@@ -7,6 +7,7 @@
 #include <order.h>
 #include <order_book.h>
 #include <pricer.h>
+#include <types.h>
 
 #include <atomic>
 #include <iostream>
@@ -39,31 +40,49 @@ std::map<Underlying, std::mutex>& Orchestrator::underlyingMutexes() { return d_u
 
 std::queue<OrderPtr>& Orchestrator::orderProcessQueue() { return d_orderProcessQueue; }
 
-std::expected<OrderPtr, std::string> Orchestrator::generateOrder(int ordersGenerated)
+std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int ordersGenerated)
 {
     int uid = ordersGenerated;
 
-    auto underlying = getUnderlying(config().assetClass());
-    if (!underlying)
+    std::vector<AssetClass> assetClasses;
+    assetClasses.reserve(2);
+    assetClasses.emplace_back(config().assetClass());
+
+    if (assetClasses.at(0) == AssetClass::Option)
     {
-        return std::unexpected(underlying.error());
+        // also add equities as underlying for options
+        assetClasses.emplace_back(AssetClass::Equity);
     }
 
-    std::expected<OrderPtr, std::string> order;
-    if (config().usePricer())
+    std::vector<OrderPtr> orders;
+    orders.reserve(assetClasses.size());
+
+    for (AssetClass assetClass : assetClasses)
     {
-        order = Order::createWithPricer(pricer(), uid, *underlying);
-    }
-    else
-    {
-        order = Order::createWithRandomValues(config(), uid, *underlying);
+        auto underlying = getUnderlying(assetClass);
+        if (!underlying)
+        {
+            return std::unexpected(underlying.error());
+        }
+
+        std::expected<OrderPtr, String> order;
+        if (config().usePricer())
+        {
+            order = Order::createWithPricer(pricer(), uid, *underlying);
+        }
+        else
+        {
+            order = Order::createWithRandomValues(config(), uid, *underlying);
+        }
+
+        if (!order)
+        {
+            return std::unexpected(order.error());
+        }
+        orders.push_back(*order);
     }
 
-    if (!order)
-    {
-        return std::unexpected(order.error());
-    }
-    return order;
+    return orders;
 }
 
 bool Orchestrator::processOrder(OrderPtr order)
@@ -208,7 +227,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_EQUITIES);
 
             orderBook()->initialiseBookAtUnderlyings<Equity>();
-            pricer()->initialisePricerEquities();
+            pricer()->addEquitiesToDataMap();
 
             for (Equity underlying : underlyingsPool<Equity>())
             {
@@ -220,9 +239,29 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_FUTURES);
 
             orderBook()->initialiseBookAtUnderlyings<Future>();
-            pricer()->initialisePricerFutures();
+            pricer()->addFuturesToDataMap();
 
             for (Future underlying : underlyingsPool<Future>())
+            {
+                underlyingMutexes()[underlying];
+            }
+
+            break;
+        case AssetClass::Option:
+            setUnderlyingsPool(config().underlyingPoolCount(), ALL_OPTIONS);
+            setUnderlyingsPool(config().underlyingPoolCount(), ALL_EQUITIES);
+
+            orderBook()->initialiseBookAtUnderlyings<Equity>();
+            orderBook()->initialiseBookAtUnderlyings<Option>();
+
+            pricer()->addEquitiesToDataMap();
+            pricer()->addOptionsToDataMap();
+
+            for (Equity underlying : underlyingsPool<Equity>())
+            {
+                underlyingMutexes()[underlying];
+            }
+            for (Option underlying : underlyingsPool<Option>())
             {
                 underlyingMutexes()[underlying];
             }
@@ -233,7 +272,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
     }
 }
 
-std::expected<std::pair<int, int>, std::string> Orchestrator::produceOrders()
+std::expected<std::pair<int, int>, String> Orchestrator::produceOrders()
 {
     d_done.store(false);
 
@@ -255,15 +294,19 @@ std::expected<std::pair<int, int>, std::string> Orchestrator::produceOrders()
     int ordersGenerated = 0;
     while (infiniteMode || i < static_cast<size_t>(config().ordersToGenerate()))
     {
-        auto order = generateOrder(ordersGenerated);
-        if (!order)
+        auto orders = generateOrders(ordersGenerated);
+        if (!orders)
         {
             d_done.store(true);
             d_queueConditionVar.notify_all();
             for (auto& thread : threadPool) thread.join();
-            return std::unexpected(order.error());
+            return std::unexpected(orders.error());
         }
-        pushToQueue(*order);
+
+        for (const auto& order : *orders)
+        {
+            pushToQueue(order);
+        }
 
         if (!infiniteMode)
         {
@@ -283,7 +326,7 @@ std::expected<std::pair<int, int>, std::string> Orchestrator::produceOrders()
     return std::pair{ordersExecuted.load(), ordersMatched.load()};
 }
 
-std::expected<void, std::string> Orchestrator::start(
+std::expected<void, String> Orchestrator::start(
     std::optional<broadcaster::Broadcaster>& broadcaster)
 {
     auto config = Config::instance();

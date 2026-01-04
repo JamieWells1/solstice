@@ -38,7 +38,4 @@ FetchContent_MakeAvailable(pybind11 googletest)
 add_subdirectory(src)
 add_subdirectory(tests)
 
-add_executable(test_broadcaster test_broadcaster_standalone.cpp)
-target_link_libraries(test_broadcaster PRIVATE broadcaster common utils enums pricing config matching ${Boost_LIBRARIES})
-
 enable_testing()

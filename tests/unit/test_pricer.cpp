@@ -25,7 +25,7 @@ class PricerTest : public ::testing::Test
         d_underlyingsPoolInitialised<Equity> = true;
 
         orderBook->initialiseBookAtUnderlyings<Equity>();
-        pricer->initialisePricerEquities();
+        pricer->addEquitiesToDataMap();
     }
 
     void TearDown() override

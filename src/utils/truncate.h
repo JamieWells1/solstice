@@ -1,12 +1,12 @@
 #ifndef TRUNCATE_H
 #define TRUNCATE_H
 
-#include <string>
+#include <types.h>
 
 namespace solstice::matching
 {
 
-std::string truncate(std::string str, size_t length);
+String truncate(String str, size_t length);
 
 }  // namespace solstice::matching
 

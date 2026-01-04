@@ -1,12 +1,13 @@
 #ifndef ORCHESTRATOR_H
 #define ORCHESTRATOR_H
 
+#include <broadcaster.h>
 #include <config.h>
 #include <matcher.h>
 #include <order.h>
 #include <order_book.h>
 #include <pricer.h>
-#include <broadcaster.h>
+#include <types.h>
 
 #include <functional>
 #include <memory>
@@ -20,7 +21,7 @@ namespace solstice::matching
 class Orchestrator
 {
    public:
-    static std::expected<void, std::string> start(std::optional<broadcaster::Broadcaster>& broadcaster);
+    static std::expected<void, String> start(std::optional<broadcaster::Broadcaster>& broadcaster);
 
     Orchestrator(Config config, std::shared_ptr<OrderBook> orderBook,
                  std::shared_ptr<Matcher> matcher, std::shared_ptr<pricing::Pricer> pricer,
@@ -44,8 +45,8 @@ class Orchestrator
 
     OrderPtr popFromQueue();
 
-    std::expected<OrderPtr, std::string> generateOrder(int ordersGenerated);
-    std::expected<std::pair<int, int>, std::string> produceOrders();
+    std::expected<std::vector<OrderPtr>, String> generateOrders(int ordersGenerated);
+    std::expected<std::pair<int, int>, String> produceOrders();
 
     template <typename T>
     void initialiseMutexes(T underlying);

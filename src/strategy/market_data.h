@@ -1,11 +1,15 @@
 #ifndef MARKET_DATA_H
 #define MARKET_DATA_H
 
-#include <string>
+#include <types.h>
+
 #include <unordered_map>
 #include <vector>
 
-using RawMarketData = std::unordered_map<std::string, std::vector<double>>;
+namespace solstice
+{
+using RawMarketData = std::unordered_map<String, std::vector<double>>;
+}
 
 namespace solstice::strategy
 {

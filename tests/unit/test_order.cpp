@@ -17,14 +17,14 @@ TEST(OrderTests, NegativePriceFails)
 {
     auto result = Order::create(0, Equity::AAPL, -10.0, 10.0, MarketSide::Ask);
     ASSERT_FALSE(result.has_value());
-    EXPECT_TRUE(result.error().find("Invalid price") != std::string::npos);
+    EXPECT_TRUE(result.error().find("Invalid price") != String::npos);
 }
 
 TEST(OrderTests, NegativeQntyFails)
 {
     auto result = Order::create(0, Equity::AAPL, 100.0, -10.0, MarketSide::Ask);
     ASSERT_FALSE(result.has_value());
-    EXPECT_TRUE(result.error().find("Invalid quantity") != std::string::npos);
+    EXPECT_TRUE(result.error().find("Invalid quantity") != String::npos);
 }
 
 TEST(OrderTests, OrderHasCorrectUid)

@@ -4,10 +4,10 @@
 #include <get_random.h>
 #include <order.h>
 #include <time_point.h>
+#include <types.h>
 
 #include <memory>
 #include <ostream>
-#include <string>
 
 namespace solstice::matching
 {
@@ -20,7 +20,7 @@ struct Transaction
     friend class OrderBook;
 
    public:
-    const std::string& uid() const;
+    const String& uid() const;
     int bidUid() const;
     int askUid() const;
     const Underlying& underlying() const;
@@ -31,7 +31,7 @@ struct Transaction
    private:
     Transaction(OrderPtr bid, OrderPtr ask, double price, int qnty);
 
-    std::string d_uid;
+    String d_uid;
     int d_bidUid;
     int d_askUid;
     Underlying d_underlying;

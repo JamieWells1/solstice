@@ -5,12 +5,14 @@
 #include <pybind11/stl.h>
 #include <sharp_movements.h>
 #include <strategy.h>
+#include <types.h>
 
-#include <string>
+namespace solstice::strategy
+{
 
 namespace py = pybind11;
 
-std::expected<PyInterface, std::string> PyInterface::establish()
+std::expected<PyInterface, String> PyInterface::establish()
 {
     auto config = solstice::Config::instance();
     if (!config)
@@ -24,8 +26,7 @@ std::expected<PyInterface, std::string> PyInterface::establish()
 }
 
 template <typename T>
-std::expected<solstice::strategy::Report, std::string> PyInterface::orchestrate(
-    RawMarketData& rawData)
+std::expected<solstice::strategy::Report, String> PyInterface::orchestrate(RawMarketData& rawData)
 {
     using namespace solstice::strategy;
 
@@ -81,3 +82,5 @@ PYBIND11_MODULE(py_interface, m)
                  return result.value();
              });
 }
+
+}  // namespace solstice::strategy

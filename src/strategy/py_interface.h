@@ -2,21 +2,27 @@
 #define PY_INTERFACE_H
 
 #include <config.h>
+#include <dispatcher.h>
 #include <market_data.h>
 #include <strategy.h>
-#include <dispatcher.h>
+#include <types.h>
 
 #include <expected>
+
+namespace solstice::strategy
+{
 
 class PyInterface
 {
    public:
-    static std::expected<PyInterface, std::string> establish();
+    static std::expected<PyInterface, String> establish();
 
     solstice::strategy::Strategy strategy() const;
 
     template <typename T>
-    std::expected<solstice::strategy::Report, std::string> orchestrate(RawMarketData& rawData);
+    std::expected<solstice::strategy::Report, String> orchestrate(RawMarketData& rawData);
 };
+
+}  // namespace solstice::strategy
 
 #endif  // PY_INTERFACE_H

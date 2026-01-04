@@ -1,5 +1,6 @@
 #include <time_point.h>
 #include <transaction.h>
+#include <types.h>
 
 namespace solstice::matching
 {
@@ -15,7 +16,7 @@ Transaction::Transaction(OrderPtr bid, OrderPtr ask, double price, int qnty)
 {
 }
 
-const std::string& Transaction::uid() const { return d_uid; }
+const String& Transaction::uid() const { return d_uid; }
 int Transaction::bidUid() const { return d_bidUid; }
 int Transaction::askUid() const { return d_askUid; }
 const Underlying& Transaction::underlying() const { return d_underlying; }

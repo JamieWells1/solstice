@@ -3,7 +3,8 @@
 The Solstice Pricing Engine is a dynamic, demand-driven pricing system for generating realistic order flow. It computes market side, price, and quantity for each order based on market microstructure principles including demand factors, spread dynamics, and volatility-adjusted pricing.
 
 > ## [Experiment]
-> *Placeholder for experiment results*
+>
+> _Placeholder for experiment results_
 
 ## Key Features
 
@@ -19,12 +20,12 @@ The Solstice Pricing Engine is a dynamic, demand-driven pricing system for gener
 
 The pricing module consists of several components working together:
 
-| Component | Purpose |
-|-----------|---------|
-| `Pricer` | Core engine: computes market side, price, and quantity |
-| `EquityPriceData` | State container for equity-specific price data |
-| `FuturePriceData` | State container for futures-specific price data |
-| `PricerDepOrderData` | Output struct packaging computed order parameters |
+| Component            | Purpose                                                |
+| -------------------- | ------------------------------------------------------ |
+| `Pricer`             | Core engine: computes market side, price, and quantity |
+| `EquityPriceData`    | State container for equity-specific price data         |
+| `FuturePriceData`    | State container for futures-specific price data        |
+| `PricerDepOrderData` | Output struct packaging computed order parameters      |
 
 ---
 
@@ -40,7 +41,7 @@ The pricing module consists of several components working together:
                     └─────────────┬─────────────┘
                                   │
                     ┌─────────────▼─────────────┐
-                    │ Pricer::compute()         │
+                    │ Pricer::computeOrderData()         │
                     │ 1. calculateMarketSide()  │
                     │ 2. calculatePrice()       │
                     │ 3. calculateQnty()        │
@@ -100,11 +101,11 @@ probability = demandFactor²
 
 Price is computed based on order type and current spread:
 
-| Order Type | Probability | Behavior |
-|------------|-------------|----------|
-| AtSpread | 50% | Passive: places at best bid/ask |
-| CrossSpread | 30% | Aggressive: crosses the spread |
-| InsideSpread | 20% | Midpoint: places within the spread |
+| Order Type   | Probability | Behavior                           |
+| ------------ | ----------- | ---------------------------------- |
+| AtSpread     | 50%         | Passive: places at best bid/ask    |
+| CrossSpread  | 30%         | Aggressive: crosses the spread     |
+| InsideSpread | 20%         | Midpoint: places within the spread |
 
 **Equity Spread Calculation:**
 
@@ -134,15 +135,15 @@ quantity = random[1, maxQty]
 
 Each underlying maintains its own `PriceData` instance tracking:
 
-| Field | Description |
-|-------|-------------|
-| `lastPrice` | Most recent execution price |
-| `highestBid` | Current best bid |
-| `lowestAsk` | Current best ask |
-| `demandFactor` | Market direction indicator [-1, 1] |
-| `movingAverage` | 10-period moving average |
-| `executions` | Total execution count |
-| `pricesSum` | Sum of prices (for MA calculation) |
+| Field              | Description                               |
+| ------------------ | ----------------------------------------- |
+| `lastPrice`        | Most recent execution price               |
+| `highestBid`       | Current best bid                          |
+| `lowestAsk`        | Current best ask                          |
+| `demandFactor`     | Market direction indicator [-1, 1]        |
+| `movingAverage`    | 10-period moving average                  |
+| `executions`       | Total execution count                     |
+| `pricesSum`        | Sum of prices (for MA calculation)        |
 | `pricesSumSquared` | Sum of squared prices (for σ calculation) |
 
 **State Lifecycle:**
@@ -171,30 +172,30 @@ First Trade:
 
 ### Equity Pricing
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `INITIAL_SPREAD_PCT` | 0.2% | Initial spread width |
-| `BASE_SPREAD_PCT` | 0.2% | Base dynamic spread |
-| `VOLATILITY_MULTIPLIER` | 0.15% | Volatility impact on spread |
-| `MIN_EXEC_FOR_SPREAD_CALC` | 10 | Executions before dynamic spread |
-| `TRANSIENT_DRIFT_PCT` | 2.5% | Bid/ask oscillation |
+| Constant                   | Value | Description                      |
+| -------------------------- | ----- | -------------------------------- |
+| `INITIAL_SPREAD_PCT`       | 0.2%  | Initial spread width             |
+| `BASE_SPREAD_PCT`          | 0.2%  | Base dynamic spread              |
+| `VOLATILITY_MULTIPLIER`    | 0.15% | Volatility impact on spread      |
+| `MIN_EXEC_FOR_SPREAD_CALC` | 10    | Executions before dynamic spread |
+| `TRANSIENT_DRIFT_PCT`      | 2.5%  | Bid/ask oscillation              |
 
 ### Futures Pricing
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `INITIAL_SPREAD_PCT` | 1% | Initial spread width |
-| `BASE_SPREAD_PCT` | 0.5% | Base dynamic spread |
-| `VOLATILITY_MULTIPLIER` | 1% | Volatility impact on spread |
-| `RISK_FREE_RATE` | 5% | Annual rate for carry calc |
+| Constant                | Value | Description                 |
+| ----------------------- | ----- | --------------------------- |
+| `INITIAL_SPREAD_PCT`    | 1%    | Initial spread width        |
+| `BASE_SPREAD_PCT`       | 0.5%  | Base dynamic spread         |
+| `VOLATILITY_MULTIPLIER` | 1%    | Volatility impact on spread |
+| `RISK_FREE_RATE`        | 5%    | Annual rate for carry calc  |
 
 ### Order Type Distribution
 
-| Type | Probability |
-|------|-------------|
-| AtSpread | 50% |
-| CrossSpread | 30% |
-| InsideSpread | 20% |
+| Type         | Probability |
+| ------------ | ----------- |
+| AtSpread     | 50%         |
+| CrossSpread  | 30%         |
+| InsideSpread | 20%         |
 
 ---
 
@@ -205,7 +206,7 @@ The pricer integrates with the orchestrator and order system:
 ```cpp
 // Initialization
 auto pricer = std::make_shared<pricing::Pricer>(orderBook);
-pricer->initialisePricerEquities();  // or initialisePricerFutures()
+pricer->addEquitiesToDataMap();  // or addFuturesToDataMap()
 
 // Order creation
 Order::createWithPricer(pricer, uid, underlying);

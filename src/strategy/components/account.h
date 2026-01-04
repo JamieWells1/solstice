@@ -12,10 +12,10 @@ namespace solstice::strategy
 class Account
 {
    public:
-    static std::expected<Account, std::string> create();
+    static std::expected<Account, String> create();
 
-    int balance();
-    std::vector<Position>& positions();
+    int balance() const;
+    const std::vector<Position>& positions() const;
 
     void balance(int newBalance);
     void addPosition(Position pos);

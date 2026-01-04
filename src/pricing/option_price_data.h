@@ -1,5 +1,5 @@
-#ifndef EQUITY_PRICE_DATA_H
-#define EQUITY_PRICE_DATA_H
+#ifndef OPTION_PRICE_DATA_H
+#define OPTION_PRICE_DATA_H
 
 #include <asset_class.h>
 #include <pricing_utils.h>
@@ -7,17 +7,17 @@
 namespace solstice::pricing
 {
 
-struct EquityPriceData
+struct OptionPriceData
 {
    public:
-    EquityPriceData(Equity underlying) : d_equity(underlying)
+    OptionPriceData(Option underlying) : d_option(underlying)
     {
         setInitialDemandFactor(*this);
         setInitialPrice(*this);
         setInitialMovingAverage(*this);
     }
 
-    Equity underlying() const;
+    Option underlying() const;
     int maRange() const;
 
     double lastPrice() const;
@@ -29,7 +29,7 @@ struct EquityPriceData
     double pricesSum() const;
     double pricesSumSquared() const;
 
-    void underlying(Equity eq);
+    void underlying(Option fut);
 
     void lastPrice(double newLastPrice);
     void highestBid(double newHighestBid);
@@ -40,12 +40,12 @@ struct EquityPriceData
     void pricesSum(double newPricesSum);
     void pricesSumSquared(double newPricesSumSquared);
 
-    double standardDeviation(const EquityPriceData& data) const;
+    double standardDeviation(const OptionPriceData& data) const;
 
    private:
     static constexpr int d_maRange = 10;
 
-    Equity d_equity;
+    Option d_option;
 
     double d_lastPrice = 0.0;
     double d_highestBid = 0.0;
@@ -61,4 +61,4 @@ struct EquityPriceData
 
 }  // namespace solstice::pricing
 
-#endif  // EQUITY_PRICE_DATA_H
+#endif  // OPTION_PRICE_DATA_H

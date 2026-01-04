@@ -6,10 +6,14 @@
 #include <future_price_data.h>
 #include <get_random.h>
 #include <market_side.h>
+#include <option_price_data.h>
+#include <option_type.h>
 #include <order_book.h>
 #include <order_type.h>
 #include <pricing_utils.h>
 #include <time_point.h>
+#include <greeks.h>
+#include <pricing_data.h>
 
 #include <memory>
 #include <variant>
@@ -17,28 +21,14 @@
 namespace solstice::pricing
 {
 
-struct PricerDepOrderData
-{
-   public:
-    PricerDepOrderData(MarketSide d_marketSide, double d_price, int d_qnty);
-
-    MarketSide marketSide();
-    double price();
-    int qnty();
-
-   private:
-    MarketSide d_marketSide;
-    double d_price;
-    double d_qnty;
-};
-
 class Pricer
 {
    public:
     Pricer(std::shared_ptr<matching::OrderBook> orderBook);
 
-    void initialisePricerEquities();
-    void initialisePricerFutures();
+    void addEquitiesToDataMap();
+    void addFuturesToDataMap();
+    void addOptionsToDataMap();
 
     void update(matching::OrderPtr order);
 
@@ -78,9 +68,15 @@ class Pricer
         return currentDF;
     }
 
-    template <typename T>
-    PricerDepOrderData compute(T& underlying)
+    template <typename AssetClass>
+    std::expected<PricerDepOrderData, String> computeOrderData(AssetClass& underlying)
     {
+        if constexpr (std::is_same_v<AssetClass, Option>)
+        {
+            return std::unexpected(
+                "computeOrderData is not appropriate for options. Use computeOptionData instead.");
+        }
+
         return std::visit(
             [this](auto&& underlying)
             {
@@ -93,13 +89,19 @@ class Pricer
             underlying);
     }
 
+    // options pricing
+    PricerDepOptionData computeOptionData(Underlying assetClass);
+    Greeks computeGreeks(PricerDepOptionData& data);
+
    public:
     EquityPriceData& getPriceData(Equity eq);
     FuturePriceData& getPriceData(Future fut);
+    OptionPriceData& getPriceData(Option opt);
 
     // propogate results from market side calc
     double calculatePrice(Equity eq, MarketSide mktSide);
     double calculatePrice(Future fut, MarketSide mktSide);
+    double calculatePrice(Option opt, MarketSide mktSide);
 
     double calculatePriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
                               double demandFactor);
@@ -107,6 +109,7 @@ class Pricer
     // propogate results from market side calc and price calc
     int calculateQnty(Equity eq, MarketSide mktSide, double price);
     int calculateQnty(Future fut, MarketSide mktSide, double price);
+    int calculateQnty(Option opt, MarketSide mktSide, double price);
 
    private:
     double generateSeedPrice();
@@ -127,6 +130,7 @@ class Pricer
 
     MarketSide calculateMarketSide(Equity eq);
     MarketSide calculateMarketSide(Future fut);
+    MarketSide calculateMarketSide(Option opt);
 
     MarketSide calculateMarketSideImpl(double probability);
 
@@ -136,6 +140,7 @@ class Pricer
 
     std::unordered_map<Equity, EquityPriceData> d_equityDataMap;
     std::unordered_map<Future, FuturePriceData> d_futureDataMap;
+    std::unordered_map<Option, OptionPriceData> d_optionDataMap;
 
     double d_seedPrice;
 
