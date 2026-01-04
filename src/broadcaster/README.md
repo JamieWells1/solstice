@@ -81,6 +81,6 @@ My hypothesis is that there will be a negligible fixed latency when the broadcas
 | True        | 2           | 528             |
 | True        | 3           | 543             |
 | True        | 4           | 556             |
-| True        | 5           | 573             |
+| True        | 5           | 564             |
 
-Surprisingly, the 'throughput tax' was on the broadcaster being enabled rather than the number of connections. I believe this is because although no connections were established in the second row, the multi-threaded logic to send to connections was still executed. After that, there is a taxing jump from 0 to 1 connections, indicating that some broadcasting logic is specific to there being at least one connection. A linear relationship with throughput is then observered as the number of connections increases, proving correct relative to my hypothesis.
+Surprisingly, the 'throughput tax' was on the broadcaster being enabled rather than the number of connections. I believe this is because although no connections were established in the second row, the multi-threaded logic to send to connections was still executed. After that, there is a taxing jump from 0 to 1 connections, indicating that some broadcasting logic is specific to there being at least one connection. A logarithmic relationship with throughput is then observered as the number of connections increases, proving correct relative to my hypothesis.
