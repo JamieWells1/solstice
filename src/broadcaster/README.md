@@ -85,6 +85,6 @@ My hypothesis is that there will be a negligible fixed latency when the broadcas
 
 Surprisingly, the 'throughput tax' was on the broadcaster being enabled rather than the number of connections. I believe this is because although no connections were established in the second row, the multi-threaded logic to send to connections was still executed. After that, there is a taxing jump from 0 to 1 connections, indicating that some broadcasting logic is specific to there being at least one connection. A logarithmic relationship with throughput is then observered as the number of connections increases.
 
-Plotting this on a graph and performing a `log(x+1)` shift on the data points, we can see a clear logarithmic relationship relationship between latency and number of connections, with the equation being `y = 4.42972 + 0.714627(ln(x))`, and an `R²` value of `0.975`.
+Plotting latency in deciseconds against number of connections on a graph and performing a `log(x+1)` shift on the data points, we can see a clear logarithmic relationship, with the equation being `y = 4.42972 + 0.714627(ln(x))`, and an `R²` value of `0.975`.
 
 ![Broadcaster Latency Line Graph](/assets/v2.2.0_broadcaster_latency.png)
