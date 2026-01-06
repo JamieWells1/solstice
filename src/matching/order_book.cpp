@@ -1,4 +1,7 @@
 #include <asset_class.h>
+#include <equity_price_data.h>
+#include <future_price_data.h>
+#include <option_price_data.h>
 #include <market_side.h>
 #include <matcher.h>
 #include <order.h>
@@ -13,6 +16,45 @@
 
 namespace solstice::matching
 {
+
+pricing::EquityPriceData& OrderBook::getPriceData(Equity eq)
+{
+    return d_equityDataMap.at(eq);
+}
+
+pricing::FuturePriceData& OrderBook::getPriceData(Future fut)
+{
+    return d_futureDataMap.at(fut);
+}
+
+pricing::OptionPriceData& OrderBook::getPriceData(Option opt)
+{
+    return d_optionDataMap.at(opt);
+}
+
+void OrderBook::addEquitiesToDataMap()
+{
+    for (const auto& underlying : underlyingsPool<Equity>())
+    {
+        d_equityDataMap.emplace(underlying, pricing::EquityPriceData(underlying));
+    }
+}
+
+void OrderBook::addFuturesToDataMap()
+{
+    for (const auto& underlying : underlyingsPool<Future>())
+    {
+        d_futureDataMap.emplace(underlying, pricing::FuturePriceData(underlying));
+    }
+}
+
+void OrderBook::addOptionsToDataMap()
+{
+    for (const auto& underlying : underlyingsPool<Option>())
+    {
+        d_optionDataMap.emplace(underlying, pricing::OptionPriceData(underlying));
+    }
+}
 
 const std::vector<Transaction>& OrderBook::transactions() const { return d_transactions; }
 

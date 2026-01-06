@@ -14,6 +14,13 @@
 #include <set>
 #include <unordered_map>
 
+namespace solstice::pricing
+{
+class EquityPriceData;
+class FuturePriceData;
+class OptionPriceData;
+}
+
 namespace solstice::matching
 {
 
@@ -37,6 +44,14 @@ class OrderBook
     friend class Orchestrator;
 
    public:
+    pricing::EquityPriceData& getPriceData(Equity eq);
+    pricing::FuturePriceData& getPriceData(Future fut);
+    pricing::OptionPriceData& getPriceData(Option opt);
+
+    void addEquitiesToDataMap();
+    void addFuturesToDataMap();
+    void addOptionsToDataMap();
+
     const std::vector<Transaction>& transactions() const;
     const std::expected<double, String> getBestPrice(OrderPtr orderToMatch);
 
@@ -78,6 +93,10 @@ class OrderBook
 
     std::unordered_map<Underlying, ActiveOrders> d_activeOrders;
     std::vector<Transaction> d_transactions;
+
+    std::unordered_map<Equity, pricing::EquityPriceData> d_equityDataMap;
+    std::unordered_map<Future, pricing::FuturePriceData> d_futureDataMap;
+    std::unordered_map<Option, pricing::OptionPriceData> d_optionDataMap;
 };
 }  // namespace solstice::matching
 

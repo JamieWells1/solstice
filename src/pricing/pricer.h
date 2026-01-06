@@ -26,10 +26,6 @@ class Pricer
    public:
     Pricer(std::shared_ptr<matching::OrderBook> orderBook);
 
-    void addEquitiesToDataMap();
-    void addFuturesToDataMap();
-    void addOptionsToDataMap();
-
     void update(matching::OrderPtr order);
 
     template <typename T>
@@ -94,10 +90,6 @@ class Pricer
     Greeks computeGreeks(PricerDepOptionData& data);
 
    public:
-    EquityPriceData& getPriceData(Equity eq);
-    FuturePriceData& getPriceData(Future fut);
-    OptionPriceData& getPriceData(Option opt);
-
     // propogate results from market side calc
     double calculatePrice(Equity eq, MarketSide mktSide);
     double calculatePrice(Future fut, MarketSide mktSide);
@@ -117,14 +109,14 @@ class Pricer
     template <typename Func>
     auto withPriceData(Underlying underlying, Func&& func)
     {
-        return std::visit([this, &func](auto asset) { return func(getPriceData(asset)); },
+        return std::visit([this, &func](auto asset) { return func(orderBook()->getPriceData(asset)); },
                           underlying);
     }
 
     template <typename Func>
     auto withPriceData(matching::OrderPtr order, Func&& func)
     {
-        return std::visit([this, &func](auto asset) { return func(getPriceData(asset)); },
+        return std::visit([this, &func](auto asset) { return func(orderBook()->getPriceData(asset)); },
                           order->underlying());  // Call underlying() to get the variant
     }
 
@@ -138,12 +130,9 @@ class Pricer
 
     double calculateCarryAdjustment(Future fut);
 
-    std::unordered_map<Equity, EquityPriceData> d_equityDataMap;
-    std::unordered_map<Future, FuturePriceData> d_futureDataMap;
-    std::unordered_map<Option, OptionPriceData> d_optionDataMap;
-
     double d_seedPrice;
 
+    std::shared_ptr<matching::OrderBook> orderBook();
     std::shared_ptr<matching::OrderBook> d_orderBook;
 };
 }  // namespace solstice::pricing

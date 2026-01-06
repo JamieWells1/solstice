@@ -25,7 +25,7 @@ class PricerTest : public ::testing::Test
         d_underlyingsPoolInitialised<Equity> = true;
 
         orderBook->initialiseBookAtUnderlyings<Equity>();
-        pricer->addEquitiesToDataMap();
+        orderBook->addEquitiesToDataMap();
     }
 
     void TearDown() override
@@ -37,7 +37,7 @@ class PricerTest : public ::testing::Test
 
 TEST_F(PricerTest, InitialSpreadIsSet)
 {
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     EXPECT_GT(data.lastPrice(), 0);
     EXPECT_GE(data.demandFactor(), -1.0);
@@ -46,7 +46,7 @@ TEST_F(PricerTest, InitialSpreadIsSet)
 
 TEST_F(PricerTest, FirstPriceCalculationInitializesSpread)
 {
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     double price = pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
 
@@ -74,7 +74,7 @@ TEST_F(PricerTest, BidPricesAreReasonable)
         maxPrice = std::max(maxPrice, price);
     }
 
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     EXPECT_EQ(pricesNegative, 0) << "No prices should be negative";
     EXPECT_LT(pricesAtOne, 50) << "Less than 50% should be at minimum price";
@@ -99,7 +99,7 @@ TEST_F(PricerTest, AskPricesAreReasonable)
         maxPrice = std::max(maxPrice, price);
     }
 
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     EXPECT_EQ(pricesNegative, 0) << "No prices should be negative";
     EXPECT_LT(pricesAtOne, 50) << "Less than 50% should be at minimum price";
@@ -108,7 +108,7 @@ TEST_F(PricerTest, AskPricesAreReasonable)
 
 TEST_F(PricerTest, SpreadRemainsValid)
 {
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     for (int i = 0; i < 50; i++)
     {
@@ -125,7 +125,7 @@ TEST_F(PricerTest, SpreadRemainsValid)
 
 TEST_F(PricerTest, QuantityCalculationIsValid)
 {
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     for (int i = 0; i < 10; i++)
     {
@@ -166,7 +166,7 @@ TEST_F(PricerTest, PriceImplWithKnownValues)
 
 TEST_F(PricerTest, QuantityDistribution)
 {
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     int qtyAtOne = 0;
     int minQty = 1000000;
@@ -224,7 +224,7 @@ TEST_F(PricerTest, QuantityDistribution)
 
 TEST_F(PricerTest, PricesFluctuateOverTime)
 {
-    auto& data = pricer->getPriceData(Equity::AAPL);
+    auto& data = orderBook->getPriceData(Equity::AAPL);
 
     std::set<double> uniqueBidPrices;
     std::set<double> uniqueAskPrices;

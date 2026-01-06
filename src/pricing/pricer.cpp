@@ -56,31 +56,13 @@ Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(ord
     d_seedPrice = generateSeedPrice();
 }
 
-void Pricer::addEquitiesToDataMap()
+std::shared_ptr<matching::OrderBook> Pricer::orderBook()
 {
-    for (const auto& underlying : underlyingsPool<Equity>())
-    {
-        d_equityDataMap.emplace(underlying, EquityPriceData(underlying));
-    }
-}
-
-void Pricer::addFuturesToDataMap()
-{
-    for (const auto& underlying : underlyingsPool<Future>())
-    {
-        d_futureDataMap.emplace(underlying, FuturePriceData(underlying));
-    }
-}
-
-void Pricer::addOptionsToDataMap()
-{
-    for (const auto& underlying : underlyingsPool<Option>())
-    {
-        d_optionDataMap.emplace(underlying, OptionPriceData(underlying));
-    }
+    return d_orderBook;
 }
 
 // ===================================================================
+// PRE-PROCESSING
 // PRE-PROCESSING
 // ===================================================================
 
@@ -90,15 +72,9 @@ double Pricer::generateSeedPrice()
     return Random::getRandomDouble(cfg.minPrice(), cfg.maxPrice());
 }
 
-EquityPriceData& Pricer::getPriceData(Equity eq) { return d_equityDataMap.at(eq); }
-
-FuturePriceData& Pricer::getPriceData(Future fut) { return d_futureDataMap.at(fut); }
-
-OptionPriceData& Pricer::getPriceData(Option opt) { return d_optionDataMap.at(opt); }
-
 MarketSide Pricer::calculateMarketSide(Equity eq)
 {
-    EquityPriceData data = getPriceData(eq);
+    EquityPriceData data = orderBook()->getPriceData(eq);
     double p = data.demandFactor() * data.demandFactor();
 
     return calculateMarketSideImpl(p);
@@ -106,7 +82,7 @@ MarketSide Pricer::calculateMarketSide(Equity eq)
 
 MarketSide Pricer::calculateMarketSide(Future fut)
 {
-    FuturePriceData data = getPriceData(fut);
+    FuturePriceData data = orderBook()->getPriceData(fut);
     double p = data.demandFactor() * data.demandFactor();
 
     return calculateMarketSideImpl(p);
@@ -114,7 +90,7 @@ MarketSide Pricer::calculateMarketSide(Future fut)
 
 MarketSide Pricer::calculateMarketSide(Option opt)
 {
-    OptionPriceData data = getPriceData(opt);
+    OptionPriceData data = orderBook()->getPriceData(opt);
     double p = data.demandFactor() * data.demandFactor();
 
     return calculateMarketSideImpl(p);
@@ -309,7 +285,7 @@ double timeToExpiry(Future fut)
 
 double Pricer::calculateCarryAdjustment(Future fut)
 {
-    FuturePriceData data = getPriceData(fut);
+    FuturePriceData data = orderBook()->getPriceData(fut);
 
     double spot = data.lastPrice();
     double t = timeToExpiry(fut);
@@ -320,7 +296,7 @@ double Pricer::calculateCarryAdjustment(Future fut)
 
 double Pricer::calculatePrice(Equity eq, MarketSide mktSide)
 {
-    EquityPriceData& data = getPriceData(eq);
+    EquityPriceData& data = orderBook()->getPriceData(eq);
 
     if (data.highestBid() == 0.0 && data.lowestAsk() == 0.0)
     {
@@ -360,7 +336,7 @@ double Pricer::calculatePrice(Equity eq, MarketSide mktSide)
 
 double Pricer::calculatePrice(Future fut, MarketSide mktSide)
 {
-    FuturePriceData& data = getPriceData(fut);
+    FuturePriceData& data = orderBook()->getPriceData(fut);
     double basePrice = data.lastPrice();
 
     if (data.executions() > 0)
@@ -397,7 +373,7 @@ double Pricer::calculatePrice(Option opt, MarketSide mktSide)
 
 int Pricer::calculateQnty(Equity eq, MarketSide mktSide, double price)
 {
-    EquityPriceData data = getPriceData(eq);
+    EquityPriceData data = orderBook()->getPriceData(eq);
     double n = data.executions();
 
     double demandScale = MIN_DEMAND_SCALE + (MAX_DEMAND_SCALE * std::abs(data.demandFactor()));
@@ -414,7 +390,7 @@ int Pricer::calculateQnty(Equity eq, MarketSide mktSide, double price)
 
 int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
 {
-    FuturePriceData data = getPriceData(fut);
+    FuturePriceData data = orderBook()->getPriceData(fut);
     double n = data.executions();
     double demandScale = MIN_DEMAND_SCALE + (MAX_DEMAND_SCALE * std::abs(data.demandFactor()));
 
