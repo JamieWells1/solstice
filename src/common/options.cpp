@@ -9,9 +9,9 @@
 namespace solstice
 {
 
-std::expected<Underlying, String> extractUnderlyingEquity(Underlying underlying)
+std::expected<Underlying, String> extractUnderlyingEquity(Underlying optionTicker)
 {
-    String optionString = to_string(underlying);
+    String optionString = to_string(optionTicker);
 
     size_t firstUnderscore = optionString.find('_');
     if (firstUnderscore == String::npos)
@@ -32,17 +32,17 @@ std::expected<Underlying, String> extractUnderlyingEquity(Underlying underlying)
     return std::unexpected("Extracted ticker not found in list of equities.");
 }
 
-OptionOrder::OptionOrder(int uid, Underlying underlying, Underlying underlyingAsset, double price, int qnty,
-                         MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
+OptionOrder::OptionOrder(int uid, Underlying optionTicker, Underlying underlyingAsset, double price,
+                         int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
                          OptionType optionType, String expiry)
-    : Order(uid, underlying, price, qnty, marketSide, timeOrderPlaced),
+    : Order(uid, optionTicker, price, qnty, marketSide, timeOrderPlaced),
       d_strike(strike),
       d_optionType(optionType)
 {
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
-    int uid, Underlying underlying, double price, int qnty, MarketSide marketSide,
+    int uid, Underlying optionTicker, double price, int qnty, MarketSide marketSide,
     TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry)
 {
     TimePoint d_timeOrderPlaced = timeNow();
@@ -53,25 +53,26 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
         return std::unexpected(isOrderValid.error());
     }
 
-    auto underlyingEquity = extractUnderlyingEquity(underlying);
+    auto underlyingEquity = extractUnderlyingEquity(optionTicker);
     if (!underlyingEquity)
     {
         return std::unexpected(underlyingEquity.error());
     }
 
-    auto optionOrder = std::shared_ptr<OptionOrder>(new (std::nothrow) OptionOrder{
-        uid, underlying, *underlyingEquity, price, qnty, marketSide, timeOrderPlaced, strike, optionType, expiry});
+    auto optionOrder = std::shared_ptr<OptionOrder>(
+        new (std::nothrow) OptionOrder{uid, optionTicker, *underlyingEquity, price, qnty,
+                                       marketSide, timeOrderPlaced, strike, optionType, expiry});
 
     return optionOrder;
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPricer(
-    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
+    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying optionTicker)
 {
-    auto optionData = pricer->computeOptionData(underlying);
+    auto optionData = pricer->computeOptionData(optionTicker);
     double optionPrice = pricer->computeBlackScholes(optionData);
 
-    auto opt = OptionOrder::create(uid, underlying, optionPrice, optionData.qnty(),
+    auto opt = OptionOrder::create(uid, optionTicker, optionPrice, optionData.qnty(),
                                    optionData.marketSide(), timeNow(), optionData.strike(),
                                    optionData.optionType(), optionData.expiry());
     if (!opt)
@@ -86,7 +87,7 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRandomValues(
-    Config cfg, int uid, Underlying underlying)
+    Config cfg, int uid, Underlying optionTicker)
 {
     auto data = Random::generateOptionData(cfg);
     if (!data)
@@ -96,7 +97,7 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRando
 
     double optionPrice = Random::getRandomOptionPrice(cfg);
 
-    auto opt = OptionOrder::create(uid, underlying, optionPrice, data->qnty(), data->marketSide(),
+    auto opt = OptionOrder::create(uid, optionTicker, optionPrice, data->qnty(), data->marketSide(),
                                    timeNow(), data->strike(), data->optionType(), data->expiry());
     if (!opt)
     {

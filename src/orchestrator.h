@@ -45,7 +45,7 @@ class Orchestrator
 
     OrderPtr popFromQueue();
 
-    std::expected<std::vector<OrderPtr>, String> generateOrders(int ordersGenerated);
+    std::expected<std::vector<OrderPtr>, String> generateOrders(int& ordersGenerated);
     std::expected<std::pair<int, int>, String> produceOrders();
 
     template <typename T>

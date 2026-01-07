@@ -3,6 +3,7 @@
 #include <log_level.h>
 #include <logging.h>
 #include <market_side.h>
+#include <options.h>
 #include <orchestrator.h>
 #include <order.h>
 #include <order_book.h>
@@ -18,6 +19,8 @@
 
 namespace solstice::matching
 {
+
+constexpr int EQUITY_OPTION_ORDER_RATIO = 10;
 
 Orchestrator::Orchestrator(Config config, std::shared_ptr<OrderBook> orderBook,
                            std::shared_ptr<Matcher> matcher,
@@ -40,10 +43,8 @@ std::map<Underlying, std::mutex>& Orchestrator::underlyingMutexes() { return d_u
 
 std::queue<OrderPtr>& Orchestrator::orderProcessQueue() { return d_orderProcessQueue; }
 
-std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int ordersGenerated)
+std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& ordersGenerated)
 {
-    int uid = ordersGenerated;
-
     auto underlying = getUnderlying(config().assetClass());
     if (!underlying)
     {
@@ -51,36 +52,76 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int or
     }
 
     std::expected<OrderPtr, String> order;
+    std::vector<OrderPtr> orders;
+
     if (config().assetClass() == AssetClass::Option)
     {
+        std::expected<OrderPtr, String> optionOrder;
+
+        auto underlyingEquity = extractUnderlyingEquity(*underlying);
+        if (!underlyingEquity)
+        {
+            return std::unexpected(underlyingEquity.error());
+        }
+
+        for (size_t i = 0; i < EQUITY_OPTION_ORDER_RATIO; i++)
+        {
+            std::expected<OrderPtr, String> equityOrder;
+            if (config().usePricer())
+            {
+                equityOrder = Order::createWithPricer(pricer(), ordersGenerated, *underlyingEquity);
+            }
+            else
+            {
+                equityOrder =
+                    Order::createWithRandomValues(config(), ordersGenerated, *underlyingEquity);
+            }
+            if (!equityOrder)
+            {
+                return std::unexpected(equityOrder.error());
+            }
+            
+            ordersGenerated++;
+            orders.emplace_back(*equityOrder);
+        }
+
         if (config().usePricer())
         {
-            order = OptionOrder::createWithPricer(pricer(), uid, *underlying);
+            optionOrder = OptionOrder::createWithPricer(pricer(), ordersGenerated, *underlying);
         }
         else
         {
-            order = OptionOrder::createWithRandomValues(config(), uid, *underlying);
+            optionOrder =
+                OptionOrder::createWithRandomValues(config(), ordersGenerated, *underlying);
         }
+
+        if (!optionOrder)
+        {
+            return std::unexpected(optionOrder.error());
+        }
+        
+        ordersGenerated++;
+        orders.emplace_back(*optionOrder);
     }
     else
     {
         if (config().usePricer())
         {
-            order = Order::createWithPricer(pricer(), uid, *underlying);
+            order = Order::createWithPricer(pricer(), ordersGenerated, *underlying);
         }
         else
         {
-            order = Order::createWithRandomValues(config(), uid, *underlying);
+            order = Order::createWithRandomValues(config(), ordersGenerated, *underlying);
         }
-    }
 
-    if (!order)
-    {
-        return std::unexpected(order.error());
-    }
+        if (!order)
+        {
+            return std::unexpected(order.error());
+        }
 
-    std::vector<OrderPtr> orders;
-    orders.push_back(*order);
+        ordersGenerated++;
+        orders.push_back(*order);
+    }
 
     return orders;
 }
@@ -312,7 +353,6 @@ std::expected<std::pair<int, int>, String> Orchestrator::produceOrders()
         {
             i++;
         }
-        ordersGenerated++;
     }
 
     d_done.store(true);

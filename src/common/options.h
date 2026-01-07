@@ -9,20 +9,20 @@
 namespace solstice
 {
 
-std::expected<Underlying, String> extractUnderlyingEquity(Underlying underlying);
+std::expected<Underlying, String> extractUnderlyingEquity(Underlying optionTicker);
 
 class OptionOrder : public Order
 {
    public:
     static std::expected<std::shared_ptr<OptionOrder>, String> create(
-        int uid, Underlying underlying, double price, int qnty, MarketSide marketSide,
+        int uid, Underlying optionTicker, double price, int qnty, MarketSide marketSide,
         TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry);
 
     static std::expected<std::shared_ptr<OptionOrder>, String> createWithPricer(
-        std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying);
+        std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying optionTicker);
 
     static std::expected<std::shared_ptr<OptionOrder>, String> createWithRandomValues(
-        Config d_config, int uid, Underlying underlying);
+        Config d_config, int uid, Underlying optionTicker);
 
     Underlying underlyingAsset();
     double strike();
@@ -43,8 +43,9 @@ class OptionOrder : public Order
     void vega(double vega);
 
    private:
-    OptionOrder(int uid, Underlying underlying, Underlying underlyingAsset, double price, int qnty, MarketSide marketSide,
-                TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry);
+    OptionOrder(int uid, Underlying optionTicker, Underlying underlyingAsset, double price,
+                int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
+                OptionType optionType, String expiry);
 
     void setGreeks(pricing::Greeks& greeks);
 

@@ -449,15 +449,15 @@ PricerDepOptionData Pricer::computeOptionData(Underlying assetClass)
 
 double Pricer::computeBlackScholes(PricerDepOptionData& data)
 {
-    // check if 
-    if (!std::holds_alternative<Option>(data.underlying()))
+    // check if underlying is of type Option
+    if (!std::holds_alternative<Option>(data.optionTicker()))
     {
         return -1;
     }
 
-    double S = std::visit([this](auto&& underlying)
-                          { return orderBook()->getPriceData(underlying).lastPrice(); },
-                          data.underlying());
+    double S = std::visit([this](auto&& ticker)
+                          { return orderBook()->getPriceData(ticker).lastPrice(); },
+                          data.optionTicker());
 
     double K = data.strike();
 
@@ -465,12 +465,12 @@ double Pricer::computeBlackScholes(PricerDepOptionData& data)
 
     double sigma = 0;
 
-    Option opt = std::get<Option>(data.underlying());
+    Option opt = std::get<Option>(data.optionTicker());
     double T = timeToExpiry(opt);
 
     if (data.optionType() == OptionType::Call)
     {
-
+        
     }
 }
 
