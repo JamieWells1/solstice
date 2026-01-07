@@ -6,6 +6,9 @@
 #include <order.h>
 #include <transaction.h>
 #include <types.h>
+#include <equity_price_data.h>
+#include <future_price_data.h>
+#include <option_price_data.h>
 
 #include <deque>
 #include <functional>

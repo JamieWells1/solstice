@@ -28,6 +28,8 @@ struct EquityPriceData
     int executions() const;
     double pricesSum() const;
     double pricesSumSquared() const;
+    double previousPrice() const;
+    double varianceEWMA() const;
 
     void underlying(Equity eq);
 
@@ -39,11 +41,16 @@ struct EquityPriceData
     void incrementExecutions();
     void pricesSum(double newPricesSum);
     void pricesSumSquared(double newPricesSumSquared);
+    void previousPrice(double mostRecentPrice);
+    void varianceEWMA(double newVariance);
 
     double standardDeviation(const EquityPriceData& data) const;
+    void updateVolatility(double newPrice);
+    double volatility() const;
 
    private:
     static constexpr int d_maRange = 10;
+    static constexpr double d_lambda = 0.94;  // EWMA decay factor (~30-day window)
 
     Equity d_equity;
 
@@ -57,6 +64,10 @@ struct EquityPriceData
     int d_executions = 0;
     double d_pricesSum = 0.0;
     double d_pricesSumSquared = 0.0;
+
+    // options specific
+    double d_previousPrice = 0.0;
+    double d_varianceEWMA = 0.0001;
 };
 
 }  // namespace solstice::pricing

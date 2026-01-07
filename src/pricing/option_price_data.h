@@ -41,9 +41,12 @@ struct OptionPriceData
     void pricesSumSquared(double newPricesSumSquared);
 
     double standardDeviation(const OptionPriceData& data) const;
+    void updateVolatility(double newPrice);
+    double volatility() const;
 
    private:
     static constexpr int d_maRange = 10;
+    static constexpr double d_lambda = 0.94;  // EWMA decay factor (~30-day window)
 
     Option d_option;
 
@@ -57,6 +60,10 @@ struct OptionPriceData
     int d_executions = 0;
     double d_pricesSum = 0.0;
     double d_pricesSumSquared = 0.0;
+
+    // EWMA volatility tracking
+    double d_previousPrice = 0.0;
+    double d_varianceEWMA = 0.0001;  // small initial variance
 };
 
 }  // namespace solstice::pricing

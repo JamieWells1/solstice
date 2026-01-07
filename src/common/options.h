@@ -24,14 +24,14 @@ class OptionOrder : public Order
     static std::expected<std::shared_ptr<OptionOrder>, String> createWithRandomValues(
         Config d_config, int uid, Underlying optionTicker);
 
-    Underlying underlyingAsset();
-    double strike();
-    OptionType optionType();
-    String expiry();
-    double delta();
-    double gamma();
-    double theta();
-    double vega();
+    Underlying underlyingAsset() const;
+    double strike() const;
+    OptionType optionType() const;
+    String expiry() const;
+    double delta() const;
+    double gamma() const;
+    double theta() const;
+    double vega() const;
 
     void underlyingAsset(Underlying underlyingAsset);
     void strike(double strike);

@@ -75,13 +75,13 @@ class Pricer
         }
 
         return std::visit(
-            [this](auto&& underlying)
+            [this, &underlying](auto&& underlyingValue)
             {
-                auto marketSide = calculateMarketSide(underlying);
-                auto price = calculateMarketPrice(underlying, marketSide);
-                auto qnty = calculateQnty(underlying, marketSide, price);
+                auto marketSide = calculateMarketSide(underlyingValue);
+                auto price = calculateMarketPrice(underlyingValue, marketSide);
+                auto qnty = calculateQnty(underlyingValue, marketSide, price);
 
-                return PricerDepOrderData(marketSide, price, qnty);
+                return PricerDepOrderData(underlying, marketSide, price, qnty);
             },
             underlying);
     }

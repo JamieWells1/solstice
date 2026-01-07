@@ -35,4 +35,25 @@ double OptionPriceData::standardDeviation(const OptionPriceData& data) const
     return std::sqrt((data.pricesSumSquared() / n) - std::pow((data.pricesSum() / n), 2));
 }
 
+void OptionPriceData::updateVolatility(double newPrice)
+{
+    if (d_previousPrice == 0.0)
+    {
+        d_previousPrice = newPrice;
+        return;
+    }
+
+    double logReturn = std::log(newPrice / d_previousPrice);
+
+    // Update EWMA variance: variance = λ × variance + (1-λ) × return²
+    d_varianceEWMA = d_lambda * d_varianceEWMA + (1.0 - d_lambda) * logReturn * logReturn;
+    d_previousPrice = newPrice;
+}
+
+double OptionPriceData::volatility() const
+{
+    // Return annualized volatility (252 trading days)
+    return std::sqrt(d_varianceEWMA * 252.0);
+}
+
 }  // namespace solstice::pricing

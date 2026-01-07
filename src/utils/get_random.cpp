@@ -2,6 +2,7 @@
 #include <get_random.h>
 #include <market_side.h>
 #include <option_type.h>
+#include <options.h>
 #include <pricing_data.h>
 #include <types.h>
 
@@ -197,7 +198,8 @@ std::expected<pricing::PricerDepOptionData, String> Random::generateOptionData(c
     OptionType optionType = getRandomOptionType();
     String expiry = getRandomExpiry(cfg);
 
-    return pricing::PricerDepOptionData(*opt, mktSide, price, qnty, strike, optionType, expiry);
+    return pricing::PricerDepOptionData(*opt, *extractUnderlyingEquity(*opt), mktSide, price, qnty,
+                                        strike, optionType, expiry);
 }
 
 pricing::Greeks Random::generateGreeks(const pricing::PricerDepOptionData& data)

@@ -31,6 +31,7 @@ constexpr double EQUITY_SPREAD_ADJUSTMENT_WEIGHT = 0.95;  // Current spread weig
 constexpr double EQUITY_TARGET_ADJUSTMENT_WEIGHT = 0.05;  // Target spread weight in adjustment
 constexpr double EQUITY_MIN_EXEC_FOR_SPREAD_CALC = 10;  // Min executions before spread calculation
 constexpr double EQUITY_TRANSIENT_DRIFT_PCT = 0.025;    // ±2.5% transient price drift
+constexpr double EQUITY_DECAY_FACTOR = 0.94;
 
 // future pricing calc constants
 constexpr double FUTURE_INITIAL_SPREAD_PCT = 0.01;            // 1% initial spread
@@ -455,9 +456,9 @@ double Pricer::computeBlackScholes(PricerDepOptionData& data)
         return -1;
     }
 
-    double S = std::visit([this](auto&& ticker)
-                          { return orderBook()->getPriceData(ticker).lastPrice(); },
-                          data.optionTicker());
+    double S =
+        std::visit([this](auto&& ticker) { return orderBook()->getPriceData(ticker).lastPrice(); },
+                   data.optionTicker());
 
     double K = data.strike();
 
@@ -470,7 +471,11 @@ double Pricer::computeBlackScholes(PricerDepOptionData& data)
 
     if (data.optionType() == OptionType::Call)
     {
-        
+        // TODO
+    }
+    else
+    {
+        // TODO
     }
 }
 
@@ -507,6 +512,7 @@ void Pricer::update(matching::OrderPtr order)
                 }
 
                 priceData.lastPrice(matchedPrice);
+                priceData.updateVolatility(matchedPrice);
 
                 if (priceData.executions() >= 10)
                 {

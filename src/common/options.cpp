@@ -6,6 +6,8 @@
 #include <time_point.h>
 #include <types.h>
 
+#include <format>
+
 namespace solstice
 {
 
@@ -29,7 +31,8 @@ std::expected<Underlying, String> extractUnderlyingEquity(Underlying optionTicke
         }
     }
 
-    return std::unexpected("Extracted ticker not found in list of equities.");
+    return std::unexpected(
+        std::format("Extracted ticker: {} not found in list of equities.", equitySymbol));
 }
 
 OptionOrder::OptionOrder(int uid, Underlying optionTicker, Underlying underlyingAsset, double price,
@@ -117,5 +120,30 @@ void OptionOrder::setGreeks(pricing::Greeks& greeks)
     this->theta(greeks.theta());
     this->vega(greeks.vega());
 }
+
+// getters
+
+Underlying OptionOrder::underlyingAsset() const { return d_underlyingAsset; }
+double OptionOrder::strike() const { return d_strike; }
+OptionType OptionOrder::optionType() const { return d_optionType; }
+String OptionOrder::expiry() const { return d_expiry; }
+double OptionOrder::delta() const { return d_delta; }
+double OptionOrder::gamma() const { return d_gamma; }
+double OptionOrder::theta() const { return d_theta; }
+double OptionOrder::vega() const { return d_vega; }
+
+// setters
+
+void OptionOrder::underlyingAsset(Underlying underlyingAsset)
+{
+    d_underlyingAsset = underlyingAsset;
+}
+void OptionOrder::strike(double strike) { d_strike = strike; }
+void OptionOrder::optionType(OptionType optionType) { d_optionType = optionType; }
+void OptionOrder::expiry(String expiry) { d_expiry = expiry; }
+void OptionOrder::delta(double delta) { d_delta = delta; }
+void OptionOrder::gamma(double gamma) { d_gamma = gamma; }
+void OptionOrder::theta(double theta) { d_theta = theta; }
+void OptionOrder::vega(double vega) { d_vega = vega; }
 
 }  // namespace solstice

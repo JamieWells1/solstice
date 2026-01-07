@@ -33,7 +33,7 @@ class OrchestratorFixture : public ::testing::Test
         d_underlyingsPoolInitialised<Equity> = true;
 
         orderBook->initialiseBookAtUnderlyings<Equity>();
-        pricer->addEquitiesToDataMap();
+        orderBook->addEquitiesToDataMap();
     }
 
     void TearDown() override
