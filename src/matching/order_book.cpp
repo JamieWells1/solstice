@@ -1,9 +1,9 @@
 #include <asset_class.h>
 #include <equity_price_data.h>
 #include <future_price_data.h>
-#include <option_price_data.h>
 #include <market_side.h>
 #include <matcher.h>
+#include <option_price_data.h>
 #include <order.h>
 #include <order_book.h>
 #include <transaction.h>
@@ -17,20 +17,11 @@
 namespace solstice::matching
 {
 
-pricing::EquityPriceData& OrderBook::getPriceData(Equity eq)
-{
-    return d_equityDataMap.at(eq);
-}
+pricing::EquityPriceData& OrderBook::getPriceData(Equity eq) { return d_equityDataMap.at(eq); }
 
-pricing::FuturePriceData& OrderBook::getPriceData(Future fut)
-{
-    return d_futureDataMap.at(fut);
-}
+pricing::FuturePriceData& OrderBook::getPriceData(Future fut) { return d_futureDataMap.at(fut); }
 
-pricing::OptionPriceData& OrderBook::getPriceData(Option opt)
-{
-    return d_optionDataMap.at(opt);
-}
+pricing::OptionPriceData& OrderBook::getPriceData(Option opt) { return d_optionDataMap.at(opt); }
 
 void OrderBook::addEquitiesToDataMap()
 {

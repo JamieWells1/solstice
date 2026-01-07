@@ -46,6 +46,7 @@ class Order
     bool matched() const;
     double matchedPrice() const;
 
+    void price(double newPrice);
     void matched(bool isFulfilled);
     void matchedPrice(double matchedPrice);
 

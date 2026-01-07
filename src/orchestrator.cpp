@@ -44,28 +44,26 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int or
 {
     int uid = ordersGenerated;
 
-    std::vector<AssetClass> assetClasses;
-    assetClasses.reserve(2);
-    assetClasses.emplace_back(config().assetClass());
-
-    if (assetClasses.at(0) == AssetClass::Option)
+    auto underlying = getUnderlying(config().assetClass());
+    if (!underlying)
     {
-        // also add equities as underlying for options
-        assetClasses.emplace_back(AssetClass::Equity);
+        return std::unexpected(underlying.error());
     }
 
-    std::vector<OrderPtr> orders;
-    orders.reserve(assetClasses.size());
-
-    for (AssetClass assetClass : assetClasses)
+    std::expected<OrderPtr, String> order;
+    if (config().assetClass() == AssetClass::Option)
     {
-        auto underlying = getUnderlying(assetClass);
-        if (!underlying)
+        if (config().usePricer())
         {
-            return std::unexpected(underlying.error());
+            order = OptionOrder::createWithPricer(pricer(), uid, *underlying);
         }
-
-        std::expected<OrderPtr, String> order;
+        else
+        {
+            order = OptionOrder::createWithRandomValues(config(), uid, *underlying);
+        }
+    }
+    else
+    {
         if (config().usePricer())
         {
             order = Order::createWithPricer(pricer(), uid, *underlying);
@@ -74,13 +72,15 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int or
         {
             order = Order::createWithRandomValues(config(), uid, *underlying);
         }
-
-        if (!order)
-        {
-            return std::unexpected(order.error());
-        }
-        orders.push_back(*order);
     }
+
+    if (!order)
+    {
+        return std::unexpected(order.error());
+    }
+
+    std::vector<OrderPtr> orders;
+    orders.push_back(*order);
 
     return orders;
 }
@@ -227,7 +227,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_EQUITIES);
 
             orderBook()->initialiseBookAtUnderlyings<Equity>();
-            pricer()->addEquitiesToDataMap();
+            orderBook()->addEquitiesToDataMap();
 
             for (Equity underlying : underlyingsPool<Equity>())
             {
@@ -239,7 +239,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             setUnderlyingsPool(config().underlyingPoolCount(), ALL_FUTURES);
 
             orderBook()->initialiseBookAtUnderlyings<Future>();
-            pricer()->addFuturesToDataMap();
+            orderBook()->addFuturesToDataMap();
 
             for (Future underlying : underlyingsPool<Future>())
             {
@@ -254,8 +254,8 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
             orderBook()->initialiseBookAtUnderlyings<Equity>();
             orderBook()->initialiseBookAtUnderlyings<Option>();
 
-            pricer()->addEquitiesToDataMap();
-            pricer()->addOptionsToDataMap();
+            orderBook()->addEquitiesToDataMap();
+            orderBook()->addOptionsToDataMap();
 
             for (Equity underlying : underlyingsPool<Equity>())
             {

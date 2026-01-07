@@ -5,15 +5,16 @@
 #include <equity_price_data.h>
 #include <future_price_data.h>
 #include <get_random.h>
+#include <greeks.h>
 #include <market_side.h>
 #include <option_price_data.h>
 #include <option_type.h>
+#include <options.h>
 #include <order_book.h>
 #include <order_type.h>
+#include <pricing_data.h>
 #include <pricing_utils.h>
 #include <time_point.h>
-#include <greeks.h>
-#include <pricing_data.h>
 
 #include <memory>
 #include <variant>
@@ -77,7 +78,7 @@ class Pricer
             [this](auto&& underlying)
             {
                 auto marketSide = calculateMarketSide(underlying);
-                auto price = calculatePrice(underlying, marketSide);
+                auto price = calculateMarketPrice(underlying, marketSide);
                 auto qnty = calculateQnty(underlying, marketSide, price);
 
                 return PricerDepOrderData(marketSide, price, qnty);
@@ -87,16 +88,17 @@ class Pricer
 
     // options pricing
     PricerDepOptionData computeOptionData(Underlying assetClass);
-    Greeks computeGreeks(PricerDepOptionData& data);
+    double computeBlackScholes(PricerDepOptionData& data);
+    Greeks computeGreeks(OptionOrder& option);
 
    public:
     // propogate results from market side calc
-    double calculatePrice(Equity eq, MarketSide mktSide);
-    double calculatePrice(Future fut, MarketSide mktSide);
-    double calculatePrice(Option opt, MarketSide mktSide);
+    double calculateMarketPrice(Equity eq, MarketSide mktSide);
+    double calculateMarketPrice(Future fut, MarketSide mktSide);
+    double calculateMarketPrice(Option opt, MarketSide mktSide);
 
-    double calculatePriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
-                              double demandFactor);
+    double calculateMarketPriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
+                                    double demandFactor);
 
     // propogate results from market side calc and price calc
     int calculateQnty(Equity eq, MarketSide mktSide, double price);
@@ -109,15 +111,15 @@ class Pricer
     template <typename Func>
     auto withPriceData(Underlying underlying, Func&& func)
     {
-        return std::visit([this, &func](auto asset) { return func(orderBook()->getPriceData(asset)); },
-                          underlying);
+        return std::visit([this, &func](auto asset)
+                          { return func(orderBook()->getPriceData(asset)); }, underlying);
     }
 
     template <typename Func>
     auto withPriceData(matching::OrderPtr order, Func&& func)
     {
-        return std::visit([this, &func](auto asset) { return func(orderBook()->getPriceData(asset)); },
-                          order->underlying());  // Call underlying() to get the variant
+        return std::visit([this, &func](auto asset)
+                          { return func(orderBook()->getPriceData(asset)); }, order->underlying());
     }
 
     MarketSide calculateMarketSide(Equity eq);

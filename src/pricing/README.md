@@ -43,7 +43,7 @@ The pricing module consists of several components working together:
                     ┌─────────────▼─────────────┐
                     │ Pricer::computeOrderData()         │
                     │ 1. calculateMarketSide()  │
-                    │ 2. calculatePrice()       │
+                    │ 2. calculateMarketPrice()       │
                     │ 3. calculateQnty()        │
                     └─────────────┬─────────────┘
                                   │

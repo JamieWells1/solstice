@@ -97,13 +97,39 @@ MarketSide Random::getRandomMarketSide()
     }
 }
 
-pricing::PricerDepOrderData Random::generateOrderData(Config& cfg)
+std::expected<pricing::PricerDepOrderData, String> Random::generateOrderData(Config& cfg)
 {
+    AssetClass assetClass = cfg.assetClass();
+
+    if (assetClass == AssetClass::Option)
+    {
+        return std::unexpected(
+            "generateOrderData is not appropriate for options. Use generateOptionData instead.");
+    }
+
     double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
     int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
     MarketSide mktSide = Random::getRandomMarketSide();
 
-    return pricing::PricerDepOrderData(mktSide, price, qnty);
+    switch (assetClass)
+    {
+        case AssetClass::Equity:
+        {
+            auto underlying = randomUnderlying<Equity>();
+            return pricing::PricerDepOrderData(*underlying, mktSide, price, qnty);
+        }
+        case AssetClass::Future:
+        {
+            auto underlying = randomUnderlying<Future>();
+            return pricing::PricerDepOrderData(*underlying, mktSide, price, qnty);
+        }
+        case AssetClass::Option:
+            break;
+        case AssetClass::COUNT:
+            break;
+    }
+
+    return std::unexpected("generateOrderData cannot be invoked on the chosen AssetClass.");
 }
 
 // ===================================================================
@@ -156,8 +182,14 @@ double Random::getRandomTheta() { return -getRandomDouble(THETA_LOWER_BOUND, THE
 
 double Random::getRandomVega() { return getRandomDouble(VEGA_LOWER_BOUND, VEGA_UPPER_BOUND); }
 
-pricing::PricerDepOptionData Random::generateOptionData(const Config& cfg)
+std::expected<pricing::PricerDepOptionData, String> Random::generateOptionData(const Config& cfg)
 {
+    auto opt = randomUnderlying<Option>();
+    if (!opt)
+    {
+        return std::unexpected(opt.error());
+    }
+
     MarketSide mktSide = getRandomMarketSide();
     int qnty = getRandomQnty(cfg.minQnty(), cfg.maxQnty());
     double price = getRandomOptionPrice(cfg);
@@ -165,7 +197,7 @@ pricing::PricerDepOptionData Random::generateOptionData(const Config& cfg)
     OptionType optionType = getRandomOptionType();
     String expiry = getRandomExpiry(cfg);
 
-    return pricing::PricerDepOptionData(mktSide, price, qnty, strike, optionType, expiry);
+    return pricing::PricerDepOptionData(*opt, mktSide, price, qnty, strike, optionType, expiry);
 }
 
 pricing::Greeks Random::generateGreeks(const pricing::PricerDepOptionData& data)

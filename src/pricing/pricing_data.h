@@ -1,9 +1,10 @@
 #ifndef PRICING_DATA_H
 #define PRICING_DATA_H
 
-#include <types.h>
+#include <asset_class.h>
 #include <market_side.h>
 #include <option_type.h>
+#include <types.h>
 
 namespace solstice::pricing
 {
@@ -11,13 +12,15 @@ namespace solstice::pricing
 struct PricerDepOrderData
 {
    public:
-    PricerDepOrderData(MarketSide d_marketSide, double d_price, int d_qnty);
+    PricerDepOrderData(Underlying underlying, MarketSide d_marketSide, double d_price, int d_qnty);
 
+    Underlying underlying() const;
     MarketSide marketSide() const;
     double price() const;
     int qnty() const;
 
    private:
+    Underlying d_underlying;
     MarketSide d_marketSide;
     double d_price;
     double d_qnty;
@@ -26,8 +29,8 @@ struct PricerDepOrderData
 struct PricerDepOptionData : public PricerDepOrderData
 {
    public:
-    PricerDepOptionData(MarketSide d_marketSide, double d_price, int d_qnty, double strike,
-                        OptionType optionType, String expiry);
+    PricerDepOptionData(Underlying underlying, MarketSide d_marketSide, double d_price, int d_qnty,
+                        double strike, OptionType optionType, String expiry);
 
     double strike() const;
     OptionType optionType() const;

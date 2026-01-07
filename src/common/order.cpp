@@ -60,7 +60,7 @@ std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Conf
                                                                             Underlying underlying)
 {
     auto data = Random::generateOrderData(cfg);
-    return Order::create(uid, underlying, data.price(), data.qnty(), data.marketSide());
+    return Order::create(uid, underlying, data->price(), data->qnty(), data->marketSide());
 }
 
 // getters
@@ -105,6 +105,11 @@ bool Order::matched() const { return d_matched; }
 double Order::matchedPrice() const { return d_matchedPrice; }
 
 // setters
+
+void Order::price(double newPrice)
+{
+    d_price = newPrice;
+}
 
 void Order::matched(bool isFulfilled) { d_matched = isFulfilled; }
 

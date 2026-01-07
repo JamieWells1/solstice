@@ -48,7 +48,7 @@ TEST_F(PricerTest, FirstPriceCalculationInitializesSpread)
 {
     auto& data = orderBook->getPriceData(Equity::AAPL);
 
-    double price = pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
+    double price = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
 
     EXPECT_GT(price, 0);
     EXPECT_GT(data.highestBid(), 0);
@@ -65,7 +65,7 @@ TEST_F(PricerTest, BidPricesAreReasonable)
 
     for (int i = 0; i < 100; i++)
     {
-        double price = pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
+        double price = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
 
         if (price == 1.0) pricesAtOne++;
         if (price < 0) pricesNegative++;
@@ -90,7 +90,7 @@ TEST_F(PricerTest, AskPricesAreReasonable)
 
     for (int i = 0; i < 100; i++)
     {
-        double price = pricer->calculatePrice(Equity::AAPL, MarketSide::Ask);
+        double price = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Ask);
 
         if (price == 1.0) pricesAtOne++;
         if (price < 0) pricesNegative++;
@@ -112,8 +112,8 @@ TEST_F(PricerTest, SpreadRemainsValid)
 
     for (int i = 0; i < 50; i++)
     {
-        pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
-        pricer->calculatePrice(Equity::AAPL, MarketSide::Ask);
+        pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
+        pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Ask);
     }
 
     double spread = data.lowestAsk() - data.highestBid();
@@ -129,10 +129,10 @@ TEST_F(PricerTest, QuantityCalculationIsValid)
 
     for (int i = 0; i < 10; i++)
     {
-        pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
+        pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
     }
 
-    double price = pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
+    double price = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
     double quantity = pricer->calculateQnty(Equity::AAPL, MarketSide::Bid, price);
 
     EXPECT_GT(quantity, 0) << "Quantity should be positive";
@@ -148,7 +148,7 @@ TEST_F(PricerTest, PriceImplWithKnownValues)
     for (int i = 0; i < 10; i++)
     {
         double price =
-            pricer->calculatePriceImpl(MarketSide::Bid, lowestAsk, highestBid, demandFactor);
+            pricer->calculateMarketPriceImpl(MarketSide::Bid, lowestAsk, highestBid, demandFactor);
 
         EXPECT_GT(price, 0) << "Price should be positive";
         EXPECT_NE(price, 1.0) << "Price shouldn't be clamped to 1.0 with valid spread";
@@ -157,7 +157,7 @@ TEST_F(PricerTest, PriceImplWithKnownValues)
     for (int i = 0; i < 10; i++)
     {
         double price =
-            pricer->calculatePriceImpl(MarketSide::Ask, lowestAsk, highestBid, demandFactor);
+            pricer->calculateMarketPriceImpl(MarketSide::Ask, lowestAsk, highestBid, demandFactor);
 
         EXPECT_GT(price, 0) << "Price should be positive";
         EXPECT_NE(price, 1.0) << "Price shouldn't be clamped to 1.0 with valid spread";
@@ -231,8 +231,8 @@ TEST_F(PricerTest, PricesFluctuateOverTime)
 
     for (int i = 0; i < 1000; i++)
     {
-        double bidPrice = pricer->calculatePrice(Equity::AAPL, MarketSide::Bid);
-        double askPrice = pricer->calculatePrice(Equity::AAPL, MarketSide::Ask);
+        double bidPrice = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
+        double askPrice = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Ask);
 
         uniqueBidPrices.insert(bidPrice);
         uniqueAskPrices.insert(askPrice);

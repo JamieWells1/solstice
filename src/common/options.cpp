@@ -9,24 +9,41 @@
 namespace solstice
 {
 
-OptionOrder::OptionOrder(int uid, Underlying underlying, double price, int qnty,
+std::expected<Underlying, String> extractUnderlyingEquity(Underlying underlying)
+{
+    String optionString = to_string(underlying);
+
+    size_t firstUnderscore = optionString.find('_');
+    if (firstUnderscore == String::npos)
+    {
+        return std::unexpected("Underlying option ticker is in an incorrect format.");
+    }
+
+    String equitySymbol = optionString.substr(0, firstUnderscore);
+
+    for (size_t i = 0; i < static_cast<size_t>(Equity::COUNT); ++i)
+    {
+        if (EQ_STR[i] == equitySymbol)
+        {
+            return static_cast<Equity>(i);
+        }
+    }
+
+    return std::unexpected("Extracted ticker not found in list of equities.");
+}
+
+OptionOrder::OptionOrder(int uid, Underlying underlying, Underlying underlyingAsset, double price, int qnty,
                          MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
-                         OptionType optionType, String expiry, double delta, double gamma,
-                         double theta, double vega)
+                         OptionType optionType, String expiry)
     : Order(uid, underlying, price, qnty, marketSide, timeOrderPlaced),
       d_strike(strike),
-      d_optionType(optionType),
-      d_delta(delta),
-      d_gamma(gamma),
-      d_theta(theta),
-      d_vega(vega)
+      d_optionType(optionType)
 {
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
     int uid, Underlying underlying, double price, int qnty, MarketSide marketSide,
-    TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry, double delta,
-    double gamma, double theta, double vega)
+    TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry)
 {
     TimePoint d_timeOrderPlaced = timeNow();
 
@@ -36,34 +53,68 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
         return std::unexpected(isOrderValid.error());
     }
 
-    auto optionOrder = std::shared_ptr<OptionOrder>(
-        new (std::nothrow) OptionOrder{uid, underlying, price, qnty, marketSide, timeOrderPlaced,
-                                       strike, optionType, expiry, delta, gamma, theta, vega});
+    auto underlyingEquity = extractUnderlyingEquity(underlying);
+    if (!underlyingEquity)
+    {
+        return std::unexpected(underlyingEquity.error());
+    }
+
+    auto optionOrder = std::shared_ptr<OptionOrder>(new (std::nothrow) OptionOrder{
+        uid, underlying, *underlyingEquity, price, qnty, marketSide, timeOrderPlaced, strike, optionType, expiry});
 
     return optionOrder;
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPricer(
-    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying assetClass)
+    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
 {
-    auto optionData = pricer->computeOptionData(assetClass);
-    auto greeks = pricer->computeGreeks(optionData);
+    auto optionData = pricer->computeOptionData(underlying);
+    double optionPrice = pricer->computeBlackScholes(optionData);
 
-    return OptionOrder::create(uid, assetClass, optionData.price(), optionData.qnty(),
-                               optionData.marketSide(), timeNow(), optionData.strike(),
-                               optionData.optionType(), optionData.expiry(), greeks.delta(),
-                               greeks.gamma(), greeks.theta(), greeks.vega());
+    auto opt = OptionOrder::create(uid, underlying, optionPrice, optionData.qnty(),
+                                   optionData.marketSide(), timeNow(), optionData.strike(),
+                                   optionData.optionType(), optionData.expiry());
+    if (!opt)
+    {
+        return std::unexpected(opt.error());
+    }
+
+    auto greeks = pricer->computeGreeks(**opt);
+    (*opt)->setGreeks(greeks);
+
+    return *opt;
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRandomValues(
     Config cfg, int uid, Underlying underlying)
 {
     auto data = Random::generateOptionData(cfg);
-    auto greeks = Random::generateGreeks(data);
+    if (!data)
+    {
+        return std::unexpected(data.error());
+    }
 
-    return OptionOrder::create(uid, underlying, data.price(), data.qnty(), data.marketSide(),
-                               timeNow(), data.strike(), data.optionType(), data.expiry(),
-                               greeks.delta(), greeks.gamma(), greeks.theta(), greeks.vega());
+    double optionPrice = Random::getRandomOptionPrice(cfg);
+
+    auto opt = OptionOrder::create(uid, underlying, optionPrice, data->qnty(), data->marketSide(),
+                                   timeNow(), data->strike(), data->optionType(), data->expiry());
+    if (!opt)
+    {
+        return std::unexpected(opt.error());
+    }
+
+    auto greeks = Random::generateGreeks(*data);
+    (*opt)->setGreeks(greeks);
+
+    return *opt;
+}
+
+void OptionOrder::setGreeks(pricing::Greeks& greeks)
+{
+    this->delta(greeks.delta());
+    this->gamma(greeks.gamma());
+    this->theta(greeks.theta());
+    this->vega(greeks.vega());
 }
 
 }  // namespace solstice

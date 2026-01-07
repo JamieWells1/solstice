@@ -49,6 +49,57 @@ constexpr double MAX_VOL_ADJUSTMENT = 0.5;  // Maximum volatility adjustment
 constexpr int MIN_QUANTITY_THRESHOLD = 10;  // Minimum quantity threshold
 constexpr int MIN_QUANTITY = 1;             // Minimum order quantity
 
+namespace
+{
+
+double timeToExpiry(Future fut)
+{
+    String name = to_string(fut);
+    CurrentDate dateNow = currentDate();
+
+    int expiryMonth = monthToInt(name.substr(name.length() - 5, 3));
+    int expiryYear = std::stoi(name.substr(name.length() - 2, 2));
+
+    double monthsToExpiry;
+
+    // NOTE: expiry year is ignored to avoid expiration in the future if securities are not updated
+    if (expiryMonth == dateNow.month)
+    {
+        monthsToExpiry = 1.0;
+    }
+    else
+    {
+        monthsToExpiry = std::abs(expiryMonth - dateNow.month);
+    }
+    // convert to years
+    return monthsToExpiry / 12;
+}
+
+double timeToExpiry(Option opt)
+{
+    String name = to_string(opt);
+    CurrentDate dateNow = currentDate();
+
+    int expiryMonth = monthToInt(name.substr(name.length() - 7, 3));
+    int expiryYear = std::stoi(name.substr(name.length() - 4, 2));
+
+    double monthsToExpiry;
+
+    // NOTE: expiry year is ignored to avoid expiration in the future if securities are not updated
+    if (expiryMonth == dateNow.month)
+    {
+        monthsToExpiry = 1.0;
+    }
+    else
+    {
+        monthsToExpiry = std::abs(expiryMonth - dateNow.month);
+    }
+    // convert to years
+    return monthsToExpiry / 12;
+}
+
+}  // namespace
+
 // Pricer
 
 Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(orderBook)
@@ -56,10 +107,7 @@ Pricer::Pricer(std::shared_ptr<matching::OrderBook> orderBook) : d_orderBook(ord
     d_seedPrice = generateSeedPrice();
 }
 
-std::shared_ptr<matching::OrderBook> Pricer::orderBook()
-{
-    return d_orderBook;
-}
+std::shared_ptr<matching::OrderBook> Pricer::orderBook() { return d_orderBook; }
 
 // ===================================================================
 // PRE-PROCESSING
@@ -150,8 +198,8 @@ OrderType Pricer::getOrderType()
     return type;
 }
 
-double Pricer::calculatePriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
-                                  double demandFactor)
+double Pricer::calculateMarketPriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
+                                        double demandFactor)
 {
     double price = 0.0;
     OrderType type = getOrderType();
@@ -267,22 +315,6 @@ double Pricer::calculatePriceImpl(MarketSide mktSide, double lowestAsk, double h
     return std::max(1.0, price);
 }
 
-double timeToExpiry(Future fut)
-{
-    String name = to_string(fut);
-    CurrentDate dateNow = currentDate();
-
-    int expiryMonth = monthToInt(name.substr(name.length() - 5, 3));
-    int expiryYear = std::stoi(name.substr(name.length() - 2, 2));
-
-    // NOTE: expiry year is ignored to avoid expiration in the future if futures are not updated
-    if (expiryMonth == dateNow.month)
-    {
-        return 1;
-    }
-    return std::abs(expiryMonth - dateNow.month) / 12.0;
-}
-
 double Pricer::calculateCarryAdjustment(Future fut)
 {
     FuturePriceData data = orderBook()->getPriceData(fut);
@@ -294,7 +326,7 @@ double Pricer::calculateCarryAdjustment(Future fut)
     return spot * std::exp(r * t) - spot;
 }
 
-double Pricer::calculatePrice(Equity eq, MarketSide mktSide)
+double Pricer::calculateMarketPrice(Equity eq, MarketSide mktSide)
 {
     EquityPriceData& data = orderBook()->getPriceData(eq);
 
@@ -331,10 +363,10 @@ double Pricer::calculatePrice(Equity eq, MarketSide mktSide)
     double adjustedBid = data.highestBid() * (1.0 + bidDrift);
     double adjustedAsk = data.lowestAsk() * (1.0 + askDrift);
 
-    return calculatePriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
+    return calculateMarketPriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
 }
 
-double Pricer::calculatePrice(Future fut, MarketSide mktSide)
+double Pricer::calculateMarketPrice(Future fut, MarketSide mktSide)
 {
     FuturePriceData& data = orderBook()->getPriceData(fut);
     double basePrice = data.lastPrice();
@@ -363,10 +395,10 @@ double Pricer::calculatePrice(Future fut, MarketSide mktSide)
     double adjustedBid = data.highestBid() + costOfCarry;
     double adjustedAsk = data.lowestAsk() + costOfCarry;
 
-    return calculatePriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
+    return calculateMarketPriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
 }
 
-double Pricer::calculatePrice(Option opt, MarketSide mktSide)
+double Pricer::calculateMarketPrice(Option opt, MarketSide mktSide)
 {
     // TODO
 }
@@ -410,12 +442,39 @@ int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
     // TODO
 }
 
-PricerDepOptionData computeOptionData(Underlying assetClass)
+PricerDepOptionData Pricer::computeOptionData(Underlying assetClass)
 {
     // TODO
 }
 
-Greeks computeGreeks(PricerDepOptionData& data)
+double Pricer::computeBlackScholes(PricerDepOptionData& data)
+{
+    // check if 
+    if (!std::holds_alternative<Option>(data.underlying()))
+    {
+        return -1;
+    }
+
+    double S = std::visit([this](auto&& underlying)
+                          { return orderBook()->getPriceData(underlying).lastPrice(); },
+                          data.underlying());
+
+    double K = data.strike();
+
+    // r is already defined as a constant at the top of the file
+
+    double sigma = 0;
+
+    Option opt = std::get<Option>(data.underlying());
+    double T = timeToExpiry(opt);
+
+    if (data.optionType() == OptionType::Call)
+    {
+
+    }
+}
+
+Greeks Pricer::computeGreeks(OptionOrder& option)
 {
     // TODO
 }
