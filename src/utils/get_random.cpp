@@ -6,10 +6,6 @@
 #include <pricing_data.h>
 #include <types.h>
 
-#include <chrono>
-#include <iomanip>
-#include <sstream>
-
 #include "greeks.h"
 
 namespace solstice
@@ -158,17 +154,18 @@ OptionType Random::getRandomOptionType()
     return getRandomBool() ? OptionType::Call : OptionType::Put;
 }
 
-String Random::getRandomExpiry(const Config& cfg)
+double Random::getRandomExpiry(const Config& cfg)
 {
     int daysFromNow = getRandomInt(cfg.minExpiryDays(), cfg.maxExpiryDays());
+    double monthsToExpiry = daysFromNow / 30.0;
 
-    auto now = std::chrono::system_clock::now();
-    auto expiry = now + std::chrono::hours(24 * daysFromNow);
-    auto expiryTime = std::chrono::system_clock::to_time_t(expiry);
+    if (monthsToExpiry < 1.0)
+    {
+        monthsToExpiry = 1.0;
+    }
 
-    std::ostringstream oss;
-    oss << std::put_time(std::localtime(&expiryTime), "%Y-%m-%d");
-    return oss.str();
+    // convert to years
+    return monthsToExpiry / 12.0;
 }
 
 double Random::getRandomDelta(OptionType optionType)
@@ -196,7 +193,7 @@ std::expected<pricing::PricerDepOptionData, String> Random::generateOptionData(c
     double price = getRandomOptionPrice(cfg);
     double strike = getRandomStrike(cfg);
     OptionType optionType = getRandomOptionType();
-    String expiry = getRandomExpiry(cfg);
+    double expiry = getRandomExpiry(cfg);
 
     return pricing::PricerDepOptionData(*opt, *extractUnderlyingEquity(*opt), mktSide, price, qnty,
                                         strike, optionType, expiry);

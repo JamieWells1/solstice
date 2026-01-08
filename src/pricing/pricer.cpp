@@ -8,6 +8,7 @@
 #include <pricer.h>
 #include <time_point.h>
 #include <types.h>
+#include <pricing_utils.h>
 
 #include <cmath>
 #include <numbers>
@@ -446,19 +447,48 @@ int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
     // TODO
 }
 
-PricerDepOptionData Pricer::computeOptionData(Underlying assetClass)
+double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
 {
+    auto equityPriceData = orderBook()->getPriceData(data.underlyingEquity());
+
+    if (data.optionType() == OptionType::Call)
+    {
+        // more options with strike higher than current spot price (OTM)
+    }
+    else  // PUT
+    {
+        // more options with strike lower than current spot price (OTM)
+    }
+
     // TODO
+
+    // NOTES:
+    // - Call OTM = strike > spot
+    // - Put OTM = strike < spot
+    // - ~70% OTM, ~25% ITM, ~5% ATM
+    // - Implement band calculation for sstandard strike increments based on price
+    // - Increments every 0.1% of stock price, (e.g. $2.50 for $250 AAPL stock),
+    //   with a range of 10-15%
+}
+
+PricerDepOptionData Pricer::computeOptionData(Option opt)
+{
+    // use private empty constructor as we are not populating the parent qnty and price attributes
+    PricerDepOptionData data;
+
+    data.optionTicker(opt);
+    data.underlyingEquity(*extractUnderlyingEquity(opt));
+    data.marketSide(Random::getRandomMarketSide());
+    data.optionType(Random::getRandomOptionType());
+    data.expiry(timeToExpiry(opt));
+
+    data.strike(calculateStrikeImpl(data));
+
+    return data;
 }
 
 double Pricer::computeBlackScholes(PricerDepOptionData& optionData)
 {
-    // check if underlying is of type Option
-    if (!std::holds_alternative<Option>(optionData.optionTicker()))
-    {
-        return -1;
-    }
-
     auto underlyingEquity = orderBook()->getPriceData(optionData.underlyingEquity());
 
     double S = underlyingEquity.lastPrice();
@@ -466,8 +496,7 @@ double Pricer::computeBlackScholes(PricerDepOptionData& optionData)
     double sigma = underlyingEquity.volatility();
     // r is already defined as a constant at the top of the file
 
-    Option opt = std::get<Option>(optionData.optionTicker());
-    double T = timeToExpiry(opt);
+    double T = optionData.expiry();
 
     const double numeratorD1 = std::log(S / K) + (r + sigma * sigma / 2) * T;
     const double denominatorD1 = sigma * std::sqrt(T);

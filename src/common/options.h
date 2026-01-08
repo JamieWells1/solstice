@@ -16,7 +16,7 @@ class OptionOrder : public Order
    public:
     static std::expected<std::shared_ptr<OptionOrder>, String> create(
         int uid, Option optionTicker, double price, int qnty, MarketSide marketSide,
-        TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry);
+        TimePoint timeOrderPlaced, double strike, OptionType optionType, double expiry);
 
     static std::expected<std::shared_ptr<OptionOrder>, String> createWithPricer(
         std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker);
@@ -27,7 +27,7 @@ class OptionOrder : public Order
     Equity underlyingEquity() const;
     double strike() const;
     OptionType optionType() const;
-    String expiry() const;
+    double expiry() const;
     double delta() const;
     double gamma() const;
     double theta() const;
@@ -36,23 +36,23 @@ class OptionOrder : public Order
     void underlyingEquity(Equity underlyingEquity);
     void strike(double strike);
     void optionType(OptionType optionType);
-    void expiry(String expiry);
+    void expiry(double expiry);
     void delta(double delta);
     void gamma(double gamma);
     void theta(double theta);
     void vega(double vega);
 
    private:
-    OptionOrder(int uid, Option optionTicker, Equity underlyingEquity, double price,
-                int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
-                OptionType optionType, String expiry);
+    OptionOrder(int uid, Option optionTicker, Equity underlyingEquity, double price, int qnty,
+                MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
+                OptionType optionType, double expiry);
 
     void setGreeks(pricing::Greeks& greeks);
 
     Equity d_underlyingEquity;
     double d_strike;
     OptionType d_optionType;
-    String d_expiry;
+    double d_expiry;
     double d_delta;
     double d_gamma;
     double d_theta;

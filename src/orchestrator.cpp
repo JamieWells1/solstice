@@ -57,8 +57,9 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
     if (config().assetClass() == AssetClass::Option)
     {
         std::expected<OrderPtr, String> optionOrder;
+        auto option = std::get<Option>(*underlying);
 
-        auto underlyingEquity = extractUnderlyingEquity(*underlying);
+        auto underlyingEquity = extractUnderlyingEquity(option);
         if (!underlyingEquity)
         {
             return std::unexpected(underlyingEquity.error());
@@ -80,26 +81,26 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
             {
                 return std::unexpected(equityOrder.error());
             }
-            
+
             ordersGenerated++;
             orders.emplace_back(*equityOrder);
         }
 
         if (config().usePricer())
         {
-            optionOrder = OptionOrder::createWithPricer(pricer(), ordersGenerated, *underlying);
+            optionOrder = OptionOrder::createWithPricer(pricer(), ordersGenerated, option);
         }
         else
         {
             optionOrder =
-                OptionOrder::createWithRandomValues(config(), ordersGenerated, *underlying);
+                OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
         }
 
         if (!optionOrder)
         {
             return std::unexpected(optionOrder.error());
         }
-        
+
         ordersGenerated++;
         orders.emplace_back(*optionOrder);
     }

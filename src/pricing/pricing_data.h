@@ -19,6 +19,11 @@ struct PricerDepOrderData
     double price() const;
     int qnty() const;
 
+    void underlying(Underlying underlying);
+    void marketSide(MarketSide marketSide);
+    void price(double price);
+    void qnty(int qnty);
+
    private:
     Underlying d_underlying;
     MarketSide d_marketSide;
@@ -29,22 +34,33 @@ struct PricerDepOrderData
 struct PricerDepOptionData : public PricerDepOrderData
 {
    public:
-    PricerDepOptionData(Underlying optionTicker, Equity underlyingEquity, MarketSide d_marketSide,
+    PricerDepOptionData(Option optionTicker, Equity underlyingEquity, MarketSide d_marketSide,
                         double d_price, int d_qnty, double strike, OptionType optionType,
-                        String expiry);
+                        double expiry);
 
-    Underlying optionTicker() const;
+    Option optionTicker() const;
     Equity underlyingEquity() const;
     double strike() const;
     OptionType optionType() const;
-    String expiry() const;
+    double expiry() const;
+
+    void optionTicker(Option optionTicker);
+    void underlyingEquity(Equity underlyingEquity);
+    void strike(double strike);
+    void optionType(OptionType optionType);
+    void expiry(double expiry);
+
+    friend class Pricer;
 
    private:
-    Underlying d_optionTicker;
+    // empty constructor for private calls from pricer
+    PricerDepOptionData();
+
+    Option d_optionTicker;
     Equity d_underlyingEquity;
     double d_strike;
     OptionType d_optionType;
-    String d_expiry;
+    double d_expiry;
 };
 
 }  // namespace solstice::pricing

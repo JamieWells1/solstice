@@ -87,7 +87,9 @@ class Pricer
     }
 
     // options pricing
-    PricerDepOptionData computeOptionData(Underlying assetClass);
+    double calculateStrikeImpl(PricerDepOptionData& data);
+
+    PricerDepOptionData computeOptionData(Option opt);
     double computeBlackScholes(PricerDepOptionData& data);
     Greeks computeGreeks(OptionOrder& option);
 

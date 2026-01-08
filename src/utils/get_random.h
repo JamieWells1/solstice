@@ -33,7 +33,7 @@ class Random
     static double getRandomOptionPrice(const Config& cfg);
     static double getRandomStrike(const Config& cfg);
     static OptionType getRandomOptionType();
-    static String getRandomExpiry(const Config& cfg);
+    static double getRandomExpiry(const Config& cfg);
     static double getRandomDelta(OptionType optionType);
     static double getRandomGamma();
     static double getRandomTheta();

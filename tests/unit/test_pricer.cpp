@@ -242,3 +242,587 @@ TEST_F(PricerTest, PricesFluctuateOverTime)
     EXPECT_GT(uniqueBidPrices.size(), 100) << "Bid prices should have more variety";
     EXPECT_GT(uniqueAskPrices.size(), 100) << "Ask prices should have more variety";
 }
+
+// ===================================================================
+// Black-Scholes Tests
+// ===================================================================
+
+class BlackScholesTest : public ::testing::Test
+{
+   protected:
+    std::shared_ptr<matching::OrderBook> orderBook;
+    std::shared_ptr<Pricer> pricer;
+
+    void SetUp() override
+    {
+        orderBook = std::make_shared<matching::OrderBook>();
+        pricer = std::make_shared<Pricer>(orderBook);
+
+        std::vector<Equity> pool = {Equity::AAPL, Equity::TSLA};
+        d_underlyingsPool<Equity> = pool;
+        d_underlyingsPoolInitialised<Equity> = true;
+
+        std::vector<Option> optionPool = {Option::AAPL_MAR26_C, Option::AAPL_MAR26_P};
+        d_underlyingsPool<Option> = optionPool;
+        d_underlyingsPoolInitialised<Option> = true;
+
+        orderBook->initialiseBookAtUnderlyings<Equity>();
+        orderBook->initialiseBookAtUnderlyings<Option>();
+        orderBook->addEquitiesToDataMap();
+        orderBook->addOptionsToDataMap();
+    }
+
+    void TearDown() override
+    {
+        d_underlyingsPool<Equity> = {};
+        d_underlyingsPoolInitialised<Equity> = false;
+        d_underlyingsPool<Option> = {};
+        d_underlyingsPoolInitialised<Option> = false;
+    }
+};
+
+TEST_F(BlackScholesTest, CallPriceWithKnownValues)
+{
+    // Test with known Black-Scholes values
+    // S=100, K=100, r=0.05, T=1, σ=0.2
+    // Expected Call Price ≈ 10.45
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    // Set up volatility to be 0.2 (20% annualized)
+    // Since vol = sqrt(varianceEWMA * 252), we need varianceEWMA = 0.2^2 / 252
+    for (int i = 0; i < 50; i++)
+    {
+        equityData.updateVolatility(100.0);
+        equityData.updateVolatility(100.4);  // Small movements to get ~20% vol
+    }
+
+    PricerDepOptionData data(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0, 100.0,
+                             OptionType::Call, 1.0);
+
+    double price = pricer->computeBlackScholes(data);
+
+    // Should be around 10.45, allow tolerance for numerical differences
+    EXPECT_GT(price, 8.0) << "Call price should be in reasonable range";
+    EXPECT_LT(price, 15.0) << "Call price should be in reasonable range";
+}
+
+TEST_F(BlackScholesTest, PutPriceWithKnownValues)
+{
+    // Test with known Black-Scholes values
+    // S=100, K=100, r=0.05, T=1, σ=0.2
+    // Expected Put Price ≈ 5.57
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    for (int i = 0; i < 50; i++)
+    {
+        equityData.updateVolatility(100.0);
+        equityData.updateVolatility(100.4);
+    }
+
+    PricerDepOptionData data(Option::AAPL_MAR26_P, Equity::AAPL, MarketSide::Bid, 0.0, 0, 100.0,
+                             OptionType::Put, 1.0);
+
+    double price = pricer->computeBlackScholes(data);
+
+    // Should be around 5.57
+    EXPECT_GT(price, 3.0) << "Put price should be in reasonable range";
+    EXPECT_LT(price, 10.0) << "Put price should be in reasonable range";
+}
+
+TEST_F(BlackScholesTest, DeepITMCallHasHighIntrinsicValue)
+{
+    // Deep ITM call (S=150, K=100) should be worth close to intrinsic value
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    PricerDepOptionData data(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0, 100.0,
+                             OptionType::Call, 0.1);  // Short expiry
+
+    double price = pricer->computeBlackScholes(data);
+    double intrinsicValue = 150.0 - 100.0;  // 50
+
+    // Price should be close to intrinsic value for deep ITM with short expiry
+    EXPECT_GT(price, intrinsicValue * 0.95) << "Deep ITM call should be close to intrinsic value";
+}
+
+TEST_F(BlackScholesTest, DeepOTMCallHasLowValue)
+{
+    // Deep OTM call (S=100, K=200) should have very low value
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(100.0);
+        equityData.updateVolatility(101.0);
+    }
+
+    PricerDepOptionData data(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0, 200.0,
+                             OptionType::Call, 0.25);
+
+    double price = pricer->computeBlackScholes(data);
+
+    EXPECT_LT(price, 2.0) << "Deep OTM call should have very low value";
+    EXPECT_GT(price, 0.0) << "Deep OTM call should still have positive value";
+}
+
+TEST_F(BlackScholesTest, ZeroTimeToExpiryCallEqualsIntrinsic)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(110.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(110.0);
+    }
+
+    PricerDepOptionData data(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0, 100.0,
+                             OptionType::Call, 0.0001);  // Nearly zero
+
+    double price = pricer->computeBlackScholes(data);
+    double intrinsic = std::max(0.0, 110.0 - 100.0);
+
+    EXPECT_NEAR(price, intrinsic, 1.0) << "At expiry, call price should equal intrinsic value";
+}
+
+TEST_F(BlackScholesTest, HighVolatilityIncreasesOptionValue)
+{
+    auto& lowVolData = orderBook->getPriceData(Equity::AAPL);
+    auto& highVolData = orderBook->getPriceData(Equity::TSLA);
+
+    lowVolData.lastPrice(100.0);
+    highVolData.lastPrice(100.0);
+
+    // Create low volatility scenario (small movements)
+    for (int i = 0; i < 30; i++)
+    {
+        lowVolData.updateVolatility(100.0);
+        lowVolData.updateVolatility(100.1);
+    }
+
+    // Create high volatility scenario (large movements)
+    for (int i = 0; i < 30; i++)
+    {
+        highVolData.updateVolatility(100.0);
+        highVolData.updateVolatility(105.0);
+        highVolData.updateVolatility(95.0);
+    }
+
+    PricerDepOptionData lowVolOption(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0,
+                                     100.0, OptionType::Call, 1.0);
+
+    PricerDepOptionData highVolOption(Option::TSLA_MAR26_C, Equity::TSLA, MarketSide::Bid, 0.0, 0,
+                                      100.0, OptionType::Call, 1.0);
+
+    double lowVolPrice = pricer->computeBlackScholes(lowVolOption);
+    double highVolPrice = pricer->computeBlackScholes(highVolOption);
+
+    EXPECT_GT(highVolPrice, lowVolPrice)
+        << "Higher volatility should result in higher option price";
+}
+
+TEST_F(BlackScholesTest, CallAndPutBothPositive)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(100.0);
+        equityData.updateVolatility(101.0);
+    }
+
+    PricerDepOptionData callData(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0, 100.0,
+                                 OptionType::Call, 0.5);
+
+    PricerDepOptionData putData(Option::AAPL_MAR26_P, Equity::AAPL, MarketSide::Bid, 0.0, 0, 100.0,
+                                OptionType::Put, 0.5);
+
+    double callPrice = pricer->computeBlackScholes(callData);
+    double putPrice = pricer->computeBlackScholes(putData);
+
+    EXPECT_GT(callPrice, 0.0) << "Call price must be positive";
+    EXPECT_GT(putPrice, 0.0) << "Put price must be positive";
+}
+
+TEST_F(BlackScholesTest, StrikeImpactOnCallPrice)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(100.0);
+        equityData.updateVolatility(101.0);
+    }
+
+    std::vector<double> strikes = {80.0, 90.0, 100.0, 110.0, 120.0};
+    std::vector<double> prices;
+
+    for (double strike : strikes)
+    {
+        PricerDepOptionData data(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0,
+                                 strike, OptionType::Call, 0.25);
+
+        prices.push_back(pricer->computeBlackScholes(data));
+    }
+
+    // Call prices should decrease as strike increases
+    for (size_t i = 0; i < prices.size() - 1; i++)
+    {
+        EXPECT_GT(prices[i], prices[i + 1]) << "Call price should decrease with higher strike";
+    }
+}
+
+TEST_F(BlackScholesTest, StrikeImpactOnPutPrice)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(100.0);
+        equityData.updateVolatility(101.0);
+    }
+
+    std::vector<double> strikes = {80.0, 90.0, 100.0, 110.0, 120.0};
+    std::vector<double> prices;
+
+    for (double strike : strikes)
+    {
+        PricerDepOptionData data(Option::AAPL_MAR26_P, Equity::AAPL, MarketSide::Bid, 0.0, 0,
+                                 strike, OptionType::Put, 0.25);
+
+        prices.push_back(pricer->computeBlackScholes(data));
+    }
+
+    // Put prices should increase as strike increases
+    for (size_t i = 0; i < prices.size() - 1; i++)
+    {
+        EXPECT_LT(prices[i], prices[i + 1]) << "Put price should increase with higher strike";
+    }
+}
+
+// ===================================================================
+// Greeks Tests
+// ===================================================================
+
+TEST_F(BlackScholesTest, CallDeltaBoundsCheck)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    // Test various strikes
+    std::vector<double> strikes = {100.0, 140.0, 150.0, 160.0, 200.0};
+
+    for (double strike : strikes)
+    {
+        auto optionResult = OptionOrder::create(1, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                                timeNow(), strike, OptionType::Call, 0.5);
+        ASSERT_TRUE(optionResult.has_value());
+
+        Greeks greeks = pricer->computeGreeks(**optionResult);
+
+        EXPECT_GE(greeks.delta(), 0.0) << "Call delta should be >= 0";
+        EXPECT_LE(greeks.delta(), 1.0) << "Call delta should be <= 1";
+    }
+}
+
+TEST_F(BlackScholesTest, PutDeltaBoundsCheck)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    std::vector<double> strikes = {100.0, 140.0, 150.0, 160.0, 200.0};
+
+    for (double strike : strikes)
+    {
+        auto optionResult = OptionOrder::create(1, Option::AAPL_MAR26_P, 10.0, 10, MarketSide::Bid,
+                                                timeNow(), strike, OptionType::Put, 0.5);
+        ASSERT_TRUE(optionResult.has_value());
+
+        Greeks greeks = pricer->computeGreeks(**optionResult);
+
+        EXPECT_GE(greeks.delta(), -1.0) << "Put delta should be >= -1";
+        EXPECT_LE(greeks.delta(), 0.0) << "Put delta should be <= 0";
+    }
+}
+
+TEST_F(BlackScholesTest, GammaIsAlwaysPositive)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    std::vector<double> strikes = {100.0, 140.0, 150.0, 160.0, 200.0};
+
+    for (double strike : strikes)
+    {
+        // Test call
+        auto callOption = OptionOrder::create(1, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                              timeNow(), strike, OptionType::Call, 0.5);
+        ASSERT_TRUE(callOption.has_value());
+        Greeks callGreeks = pricer->computeGreeks(**callOption);
+        EXPECT_GT(callGreeks.gamma(), 0.0) << "Call gamma should be positive";
+
+        // Test put
+        auto putOption = OptionOrder::create(2, Option::AAPL_MAR26_P, 10.0, 10, MarketSide::Bid,
+                                             timeNow(), strike, OptionType::Put, 0.5);
+        ASSERT_TRUE(putOption.has_value());
+        Greeks putGreeks = pricer->computeGreeks(**putOption);
+        EXPECT_GT(putGreeks.gamma(), 0.0) << "Put gamma should be positive";
+    }
+}
+
+TEST_F(BlackScholesTest, VegaIsAlwaysPositive)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    std::vector<double> strikes = {100.0, 140.0, 150.0, 160.0, 200.0};
+
+    for (double strike : strikes)
+    {
+        // Test call
+        auto callOption = OptionOrder::create(1, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                              timeNow(), strike, OptionType::Call, 0.5);
+        ASSERT_TRUE(callOption.has_value());
+        Greeks callGreeks = pricer->computeGreeks(**callOption);
+        EXPECT_GT(callGreeks.vega(), 0.0) << "Call vega should be positive";
+
+        // Test put
+        auto putOption = OptionOrder::create(2, Option::AAPL_MAR26_P, 10.0, 10, MarketSide::Bid,
+                                             timeNow(), strike, OptionType::Put, 0.5);
+        ASSERT_TRUE(putOption.has_value());
+        Greeks putGreeks = pricer->computeGreeks(**putOption);
+        EXPECT_GT(putGreeks.vega(), 0.0) << "Put vega should be positive";
+    }
+}
+
+TEST_F(BlackScholesTest, ThetaIsNegativeForLongOptions)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    // Test call
+    auto callOption = OptionOrder::create(1, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                          timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(callOption.has_value());
+    Greeks callGreeks = pricer->computeGreeks(**callOption);
+    EXPECT_LT(callGreeks.theta(), 0.0) << "Call theta should be negative (time decay)";
+
+    // Test put
+    auto putOption = OptionOrder::create(2, Option::AAPL_MAR26_P, 10.0, 10, MarketSide::Bid,
+                                         timeNow(), 150.0, OptionType::Put, 0.5);
+    ASSERT_TRUE(putOption.has_value());
+    Greeks putGreeks = pricer->computeGreeks(**putOption);
+    EXPECT_LT(putGreeks.theta(), 0.0) << "Put theta should be negative (time decay)";
+}
+
+TEST_F(BlackScholesTest, ATMOptionsHaveMaxGamma)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    // ATM
+    auto atmOption = OptionOrder::create(1, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                         timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(atmOption.has_value());
+    Greeks atmGreeks = pricer->computeGreeks(**atmOption);
+
+    // ITM
+    auto itmOption = OptionOrder::create(2, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                         timeNow(), 130.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(itmOption.has_value());
+    Greeks itmGreeks = pricer->computeGreeks(**itmOption);
+
+    // OTM
+    auto otmOption = OptionOrder::create(3, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                         timeNow(), 170.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(otmOption.has_value());
+    Greeks otmGreeks = pricer->computeGreeks(**otmOption);
+
+    // ATM should have highest gamma
+    EXPECT_GT(atmGreeks.gamma(), itmGreeks.gamma()) << "ATM gamma should be higher than ITM gamma";
+    EXPECT_GT(atmGreeks.gamma(), otmGreeks.gamma()) << "ATM gamma should be higher than OTM gamma";
+}
+
+TEST_F(BlackScholesTest, DeltaIncreasesWithMoneyness)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(150.0);
+
+    for (int i = 0; i < 20; i++)
+    {
+        equityData.updateVolatility(150.0);
+        equityData.updateVolatility(151.0);
+    }
+
+    std::vector<double> strikes = {130.0, 140.0, 150.0, 160.0, 170.0};
+    std::vector<double> deltas;
+
+    for (double strike : strikes)
+    {
+        auto option = OptionOrder::create(1, Option::AAPL_MAR26_C, 10.0, 10, MarketSide::Bid,
+                                          timeNow(), strike, OptionType::Call, 0.5);
+        ASSERT_TRUE(option.has_value());
+
+        Greeks greeks = pricer->computeGreeks(**option);
+        deltas.push_back(greeks.delta());
+    }
+
+    // For calls, delta decreases as strike increases (OTM -> ITM)
+    for (size_t i = 0; i < deltas.size() - 1; i++)
+    {
+        EXPECT_GT(deltas[i], deltas[i + 1]) << "Call delta should decrease as strike increases";
+    }
+}
+
+// ===================================================================
+// Volatility (EWMA) Tests
+// ===================================================================
+
+TEST_F(BlackScholesTest, VolatilityInitiallyLow)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    // Before any updates, volatility should be very low
+    double initialVol = equityData.volatility();
+    EXPECT_LT(initialVol, 0.01) << "Initial volatility should be near zero";
+}
+
+TEST_F(BlackScholesTest, VolatilityIncreasesWithPriceChanges)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    double volBefore = equityData.volatility();
+
+    // Simulate price changes
+    for (int i = 0; i < 30; i++)
+    {
+        double price = 100.0 + (i % 2 == 0 ? 2.0 : -2.0);
+        equityData.updateVolatility(price);
+    }
+
+    double volAfter = equityData.volatility();
+
+    EXPECT_GT(volAfter, volBefore) << "Volatility should increase after price movements";
+}
+
+TEST_F(BlackScholesTest, LargerMovementsCreateHigherVolatility)
+{
+    auto& equityData1 = orderBook->getPriceData(Equity::AAPL);
+    auto& equityData2 = orderBook->getPriceData(Equity::TSLA);
+
+    equityData1.lastPrice(100.0);
+    equityData2.lastPrice(100.0);
+
+    // Small movements
+    for (int i = 0; i < 50; i++)
+    {
+        equityData1.updateVolatility(100.0 + 0.5 * (i % 2 == 0 ? 1 : -1));
+    }
+
+    // Large movements
+    for (int i = 0; i < 50; i++)
+    {
+        equityData2.updateVolatility(100.0 + 5.0 * (i % 2 == 0 ? 1 : -1));
+    }
+
+    double smallVol = equityData1.volatility();
+    double largeVol = equityData2.volatility();
+
+    EXPECT_GT(largeVol, smallVol) << "Larger price movements should create higher volatility";
+}
+
+TEST_F(BlackScholesTest, VolatilityIsAnnualized)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    // Create realistic daily returns (~2% daily movements)
+    for (int i = 0; i < 100; i++)
+    {
+        double price = 100.0 * (1.0 + 0.02 * (i % 2 == 0 ? 1 : -1));
+        equityData.updateVolatility(price);
+    }
+
+    double vol = equityData.volatility();
+
+    // Annualized volatility should be reasonable (typically 10-50% for equities)
+    EXPECT_GT(vol, 0.0) << "Volatility should be positive";
+    EXPECT_LT(vol, 2.0) << "Volatility should be less than 200%";
+}
+
+TEST_F(BlackScholesTest, VolatilityConvergesToSteadyState)
+{
+    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    equityData.lastPrice(100.0);
+
+    // Simulate many price updates
+    for (int i = 0; i < 200; i++)
+    {
+        double price = 100.0 + 1.0 * (i % 2 == 0 ? 1 : -1);
+        equityData.updateVolatility(price);
+    }
+
+    double volBefore = equityData.volatility();
+
+    // Continue with same pattern
+    for (int i = 0; i < 50; i++)
+    {
+        double price = 100.0 + 1.0 * (i % 2 == 0 ? 1 : -1);
+        equityData.updateVolatility(price);
+    }
+
+    double volAfter = equityData.volatility();
+
+    // Volatility should stabilize (change less than 10%)
+    double percentChange = std::abs(volAfter - volBefore) / volBefore;
+    EXPECT_LT(percentChange, 0.15) << "Volatility should converge to steady state";
+}
