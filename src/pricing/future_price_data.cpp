@@ -52,7 +52,6 @@ void FuturePriceData::updateVolatility(double newPrice)
 
 double FuturePriceData::volatility() const
 {
-    // Return annualized volatility (252 trading days)
     return std::sqrt(d_varianceEWMA * 252.0);
 }
 

@@ -52,7 +52,6 @@ void OptionPriceData::updateVolatility(double newPrice)
 
 double OptionPriceData::volatility() const
 {
-    // Return annualized volatility (252 trading days)
     return std::sqrt(d_varianceEWMA * 252.0);
 }
 

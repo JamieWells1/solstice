@@ -29,19 +29,19 @@ struct PricerDepOrderData
 struct PricerDepOptionData : public PricerDepOrderData
 {
    public:
-    PricerDepOptionData(Underlying optionTicker, Underlying underlyingAsset,
-                        MarketSide d_marketSide, double d_price, int d_qnty, double strike,
-                        OptionType optionType, String expiry);
+    PricerDepOptionData(Underlying optionTicker, Equity underlyingEquity, MarketSide d_marketSide,
+                        double d_price, int d_qnty, double strike, OptionType optionType,
+                        String expiry);
 
     Underlying optionTicker() const;
-    Underlying underlyingAsset() const;
+    Equity underlyingEquity() const;
     double strike() const;
     OptionType optionType() const;
     String expiry() const;
 
    private:
     Underlying d_optionTicker;
-    Underlying d_underlyingAsset;
+    Equity d_underlyingEquity;
     double d_strike;
     OptionType d_optionType;
     String d_expiry;

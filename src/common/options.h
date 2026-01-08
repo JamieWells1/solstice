@@ -9,22 +9,22 @@
 namespace solstice
 {
 
-std::expected<Underlying, String> extractUnderlyingEquity(Underlying optionTicker);
+std::expected<Equity, String> extractUnderlyingEquity(Option optionTicker);
 
 class OptionOrder : public Order
 {
    public:
     static std::expected<std::shared_ptr<OptionOrder>, String> create(
-        int uid, Underlying optionTicker, double price, int qnty, MarketSide marketSide,
+        int uid, Option optionTicker, double price, int qnty, MarketSide marketSide,
         TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry);
 
     static std::expected<std::shared_ptr<OptionOrder>, String> createWithPricer(
-        std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying optionTicker);
+        std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker);
 
     static std::expected<std::shared_ptr<OptionOrder>, String> createWithRandomValues(
-        Config d_config, int uid, Underlying optionTicker);
+        Config d_config, int uid, Option optionTicker);
 
-    Underlying underlyingAsset() const;
+    Equity underlyingEquity() const;
     double strike() const;
     OptionType optionType() const;
     String expiry() const;
@@ -33,7 +33,7 @@ class OptionOrder : public Order
     double theta() const;
     double vega() const;
 
-    void underlyingAsset(Underlying underlyingAsset);
+    void underlyingEquity(Equity underlyingEquity);
     void strike(double strike);
     void optionType(OptionType optionType);
     void expiry(String expiry);
@@ -43,13 +43,13 @@ class OptionOrder : public Order
     void vega(double vega);
 
    private:
-    OptionOrder(int uid, Underlying optionTicker, Underlying underlyingAsset, double price,
+    OptionOrder(int uid, Option optionTicker, Equity underlyingEquity, double price,
                 int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
                 OptionType optionType, String expiry);
 
     void setGreeks(pricing::Greeks& greeks);
 
-    Underlying d_underlyingAsset;
+    Equity d_underlyingEquity;
     double d_strike;
     OptionType d_optionType;
     String d_expiry;

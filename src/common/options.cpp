@@ -11,7 +11,7 @@
 namespace solstice
 {
 
-std::expected<Underlying, String> extractUnderlyingEquity(Underlying optionTicker)
+std::expected<Equity, String> extractUnderlyingEquity(Equity optionTicker)
 {
     String optionString = to_string(optionTicker);
 
@@ -35,9 +35,9 @@ std::expected<Underlying, String> extractUnderlyingEquity(Underlying optionTicke
         std::format("Extracted ticker: {} not found in list of equities.", equitySymbol));
 }
 
-OptionOrder::OptionOrder(int uid, Underlying optionTicker, Underlying underlyingAsset, double price,
-                         int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
-                         OptionType optionType, String expiry)
+OptionOrder::OptionOrder(int uid, Option optionTicker, Equity underlyingEquity,
+                         double price, int qnty, MarketSide marketSide, TimePoint timeOrderPlaced,
+                         double strike, OptionType optionType, String expiry)
     : Order(uid, optionTicker, price, qnty, marketSide, timeOrderPlaced),
       d_strike(strike),
       d_optionType(optionType)
@@ -45,7 +45,7 @@ OptionOrder::OptionOrder(int uid, Underlying optionTicker, Underlying underlying
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
-    int uid, Underlying optionTicker, double price, int qnty, MarketSide marketSide,
+    int uid, Option optionTicker, double price, int qnty, MarketSide marketSide,
     TimePoint timeOrderPlaced, double strike, OptionType optionType, String expiry)
 {
     TimePoint d_timeOrderPlaced = timeNow();
@@ -70,7 +70,7 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPricer(
-    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying optionTicker)
+    std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker)
 {
     auto optionData = pricer->computeOptionData(optionTicker);
     double optionPrice = pricer->computeBlackScholes(optionData);
@@ -90,7 +90,7 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
 }
 
 std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRandomValues(
-    Config cfg, int uid, Underlying optionTicker)
+    Config cfg, int uid, Option optionTicker)
 {
     auto data = Random::generateOptionData(cfg);
     if (!data)
@@ -123,7 +123,7 @@ void OptionOrder::setGreeks(pricing::Greeks& greeks)
 
 // getters
 
-Underlying OptionOrder::underlyingAsset() const { return d_underlyingAsset; }
+Equity OptionOrder::underlyingEquity() const { return d_underlyingEquity; }
 double OptionOrder::strike() const { return d_strike; }
 OptionType OptionOrder::optionType() const { return d_optionType; }
 String OptionOrder::expiry() const { return d_expiry; }
@@ -134,9 +134,9 @@ double OptionOrder::vega() const { return d_vega; }
 
 // setters
 
-void OptionOrder::underlyingAsset(Underlying underlyingAsset)
+void OptionOrder::underlyingEquity(Equity underlyingEquity)
 {
-    d_underlyingAsset = underlyingAsset;
+    d_underlyingEquity = underlyingEquity;
 }
 void OptionOrder::strike(double strike) { d_strike = strike; }
 void OptionOrder::optionType(OptionType optionType) { d_optionType = optionType; }

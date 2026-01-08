@@ -5,23 +5,27 @@
 
 namespace solstice::pricing
 {
-    template <typename PriceData>
-    void setInitialDemandFactor(PriceData & underlying)  // type
-    {
-        underlying.demandFactor(Random::getRandomDouble(-1, 1));
-    }
 
-    template <typename PriceData>
-    void setInitialPrice(PriceData & underlying)
-    {
-        underlying.lastPrice(Random::getRandomDouble(10, 200));
-    }
+double N(double x);
 
-    template <typename PriceData>
-    void setInitialMovingAverage(PriceData & underlying)
-    {
-        underlying.movingAverage(underlying.lastPrice());
-    }
+template <typename PriceData>
+void setInitialDemandFactor(PriceData& underlying)  // type
+{
+    underlying.demandFactor(Random::getRandomDouble(-1, 1));
 }
+
+template <typename PriceData>
+void setInitialPrice(PriceData& underlying)
+{
+    underlying.lastPrice(Random::getRandomDouble(10, 200));
+}
+
+template <typename PriceData>
+void setInitialMovingAverage(PriceData& underlying)
+{
+    underlying.movingAverage(underlying.lastPrice());
+}
+
+}  // namespace solstice::pricing
 
 #endif  // PRICING_UTILS_H

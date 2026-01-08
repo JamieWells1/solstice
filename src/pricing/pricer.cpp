@@ -10,10 +10,13 @@
 #include <types.h>
 
 #include <cmath>
+#include <numbers>
 #include <unordered_map>
 
 namespace solstice::pricing
 {
+
+using std::numbers::pi;
 
 // risk-free rate for derivatives pricing
 constexpr double r = 0.05;
@@ -448,40 +451,81 @@ PricerDepOptionData Pricer::computeOptionData(Underlying assetClass)
     // TODO
 }
 
-double Pricer::computeBlackScholes(PricerDepOptionData& data)
+double Pricer::computeBlackScholes(PricerDepOptionData& optionData)
 {
     // check if underlying is of type Option
-    if (!std::holds_alternative<Option>(data.optionTicker()))
+    if (!std::holds_alternative<Option>(optionData.optionTicker()))
     {
         return -1;
     }
 
-    double S =
-        std::visit([this](auto&& ticker) { return orderBook()->getPriceData(ticker).lastPrice(); },
-                   data.optionTicker());
+    auto underlyingEquity = orderBook()->getPriceData(optionData.underlyingEquity());
 
-    double K = data.strike();
-
+    double S = underlyingEquity.lastPrice();
+    double K = optionData.strike();
+    double sigma = underlyingEquity.volatility();
     // r is already defined as a constant at the top of the file
 
-    double sigma = 0;
-
-    Option opt = std::get<Option>(data.optionTicker());
+    Option opt = std::get<Option>(optionData.optionTicker());
     double T = timeToExpiry(opt);
 
-    if (data.optionType() == OptionType::Call)
+    const double numeratorD1 = std::log(S / K) + (r + sigma * sigma / 2) * T;
+    const double denominatorD1 = sigma * std::sqrt(T);
+    const double d1 = numeratorD1 / denominatorD1;
+
+    const double d2 = d1 - (sigma * std::sqrt(T));
+
+    double price = -1;
+
+    if (optionData.optionType() == OptionType::Call)
     {
-        // TODO
+        price = (S * N(d1)) - (K * std::exp(-r * T) * N(d2));
     }
-    else
+    else  // Put
     {
-        // TODO
+        price = (K * std::exp(-r * T) * (1 - N(d2))) - (S * (1 - N(d1)));
     }
+
+    return price;
 }
 
 Greeks Pricer::computeGreeks(OptionOrder& option)
 {
-    // TODO
+    Option optionTicker = std::get<Option>(option.underlying());
+
+    auto priceData = orderBook()->getPriceData(option.underlyingEquity());
+    double S = priceData.lastPrice();
+    double sigma = priceData.volatility();
+    double K = option.strike();
+    double T = timeToExpiry(optionTicker);
+    // r is already defined as a constant at the top of the file
+
+    double d1 = (std::log(S / K) + (r + sigma * sigma / 2.0) * T) / (sigma * std::sqrt(T));
+    double d2 = d1 - sigma * std::sqrt(T);
+
+    double n_d1 = (1.0 / std::sqrt(2.0 * pi)) * std::exp(-d1 * d1 / 2.0);
+
+    double N_d1 = 0.5 * (1.0 + std::erf(d1 / std::sqrt(2.0)));
+    double N_d2 = 0.5 * (1.0 + std::erf(d2 / std::sqrt(2.0)));
+
+    double delta, theta;
+
+    if (option.optionType() == OptionType::Call)
+    {
+        delta = N_d1;
+        theta = -(S * n_d1 * sigma) / (2.0 * std::sqrt(T)) - r * K * std::exp(-r * T) * N_d2;
+    }
+    else  // Put
+    {
+        delta = N_d1 - 1.0;
+        theta =
+            -(S * n_d1 * sigma) / (2.0 * std::sqrt(T)) + r * K * std::exp(-r * T) * (1.0 - N_d2);
+    }
+
+    double gamma = n_d1 / (S * sigma * std::sqrt(T));
+    double vega = S * std::sqrt(T) * n_d1;
+
+    return Greeks(delta, gamma, theta, vega);
 }
 
 // ===================================================================

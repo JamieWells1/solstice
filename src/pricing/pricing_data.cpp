@@ -8,12 +8,9 @@ namespace solstice::pricing
 
 // PricerDepOrderData
 
-PricerDepOrderData::PricerDepOrderData(Underlying underlying,
-                                       MarketSide marketSide, double price, int qnty)
-    : d_underlying(underlying),
-      d_marketSide(marketSide),
-      d_price(price),
-      d_qnty(qnty)
+PricerDepOrderData::PricerDepOrderData(Underlying underlying, MarketSide marketSide, double price,
+                                       int qnty)
+    : d_underlying(underlying), d_marketSide(marketSide), d_price(price), d_qnty(qnty)
 {
 }
 
@@ -27,9 +24,9 @@ int PricerDepOrderData::qnty() const { return d_qnty; }
 
 // PricerDepOptionData
 
-PricerDepOptionData::PricerDepOptionData(Underlying optionTicker, Underlying underlyingAsset, MarketSide marketSide,
-                                         double price, int qnty, double strike,
-                                         OptionType optionType, String expiry)
+PricerDepOptionData::PricerDepOptionData(Underlying optionTicker, Equity underlyingEquity,
+                                         MarketSide marketSide, double price, int qnty,
+                                         double strike, OptionType optionType, String expiry)
     : PricerDepOrderData(optionTicker, marketSide, price, qnty),
       d_strike(strike),
       d_optionType(optionType),
@@ -39,7 +36,7 @@ PricerDepOptionData::PricerDepOptionData(Underlying optionTicker, Underlying und
 
 Underlying PricerDepOptionData::optionTicker() const { return d_optionTicker; }
 
-Underlying PricerDepOptionData::underlyingAsset() const { return d_underlyingAsset; }
+Equity PricerDepOptionData::underlyingEquity() const { return d_underlyingEquity; }
 
 double PricerDepOptionData::strike() const { return d_strike; }
 
