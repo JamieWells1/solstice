@@ -473,7 +473,7 @@ double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
             strikeLowerBound = spot - (0.01 * spot);
             strikeUpperBound = spot - (0.15 * spot);
         }
-        else
+        else  // > 95
         {
             // ATM, strike == spot
             strikeLowerBound = spot - (0.005 * spot);
@@ -494,7 +494,7 @@ double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
             strikeLowerBound = spot + (0.01 * spot);
             strikeUpperBound = spot + (0.15 * spot);
         }
-        else
+        else  // > 95
         {
             // ATM, strike == spot
             strikeLowerBound = spot - (0.005 * spot);
@@ -503,19 +503,11 @@ double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
     }
 
     // band increment, usually ~1% of spot price (e.g. $2.50 for $250 AAPL stock)
-    double bandIncrement = 
+    double bandIncrement = getBandIncrement(spot);
+    strike = Random::getRandomDouble(strikeLowerBound, strikeUpperBound);
 
-    // TODO
-
-    // ======================================== NOTES: ========================================
-    // - Call OTM = strike > spot
-    // - Put OTM = strike < spot
-    // - ~70% OTM, ~25% ITM, ~5% ATM
-    // - Implement band calculation for standard strike increments based on price
-    // - Increments every 1% of stock price, (e.g. $2.50 for $250 AAPL stock),
-    //   max range 10-15% of spot price
-    // ========================================================================================
-
+    // round off strike to nearest band
+    strike = std::round(strike / bandIncrement) * bandIncrement;
     return strike;
 }
 
