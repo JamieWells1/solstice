@@ -6,9 +6,9 @@
 #include <option_type.h>
 #include <order_type.h>
 #include <pricer.h>
+#include <pricing_utils.h>
 #include <time_point.h>
 #include <types.h>
-#include <pricing_utils.h>
 
 #include <cmath>
 #include <numbers>
@@ -449,26 +449,74 @@ int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
 
 double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
 {
+    double strikeLowerBound;
+    double strikeUpperBound;
+    double strike;
+
     auto equityPriceData = orderBook()->getPriceData(data.underlyingEquity());
+    double spot = equityPriceData.lastPrice();
+
+    // integer to determine if option is OTM, ATM or ITM
+    double moneyCall = Random::getRandomInt(1, 100);
 
     if (data.optionType() == OptionType::Call)
     {
-        // more options with strike higher than current spot price (OTM)
+        if (moneyCall <= 25)
+        {
+            // ITM, strike > spot
+            strikeLowerBound = spot + (0.01 * spot);
+            strikeUpperBound = spot + (0.15 * spot);
+        }
+        else if (moneyCall > 25 && moneyCall <= 95)
+        {
+            // OTM, strike < spot
+            strikeLowerBound = spot - (0.01 * spot);
+            strikeUpperBound = spot - (0.15 * spot);
+        }
+        else
+        {
+            // ATM, strike == spot
+            strikeLowerBound = spot - (0.005 * spot);
+            strikeUpperBound = spot + (0.005 * spot);
+        }
     }
     else  // PUT
     {
-        // more options with strike lower than current spot price (OTM)
+        if (moneyCall <= 25)
+        {
+            // ITM, strike < spot
+            strikeLowerBound = spot - (0.01 * spot);
+            strikeUpperBound = spot - (0.15 * spot);
+        }
+        else if (moneyCall > 25 && moneyCall <= 95)
+        {
+            // OTM, strike > spot
+            strikeLowerBound = spot + (0.01 * spot);
+            strikeUpperBound = spot + (0.15 * spot);
+        }
+        else
+        {
+            // ATM, strike == spot
+            strikeLowerBound = spot - (0.005 * spot);
+            strikeUpperBound = spot + (0.005 * spot);
+        }
     }
+
+    // band increment, usually ~1% of spot price (e.g. $2.50 for $250 AAPL stock)
+    double bandIncrement = 
 
     // TODO
 
-    // NOTES:
+    // ======================================== NOTES: ========================================
     // - Call OTM = strike > spot
     // - Put OTM = strike < spot
     // - ~70% OTM, ~25% ITM, ~5% ATM
-    // - Implement band calculation for sstandard strike increments based on price
-    // - Increments every 0.1% of stock price, (e.g. $2.50 for $250 AAPL stock),
-    //   with a range of 10-15%
+    // - Implement band calculation for standard strike increments based on price
+    // - Increments every 1% of stock price, (e.g. $2.50 for $250 AAPL stock),
+    //   max range 10-15% of spot price
+    // ========================================================================================
+
+    return strike;
 }
 
 PricerDepOptionData Pricer::computeOptionData(Option opt)
@@ -478,11 +526,10 @@ PricerDepOptionData Pricer::computeOptionData(Option opt)
 
     data.optionTicker(opt);
     data.underlyingEquity(*extractUnderlyingEquity(opt));
+    data.strike(calculateStrikeImpl(data));
     data.marketSide(Random::getRandomMarketSide());
     data.optionType(Random::getRandomOptionType());
     data.expiry(timeToExpiry(opt));
-
-    data.strike(calculateStrikeImpl(data));
 
     return data;
 }
