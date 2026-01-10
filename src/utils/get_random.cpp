@@ -1,12 +1,11 @@
 #include <config.h>
 #include <get_random.h>
+#include <greeks.h>
 #include <market_side.h>
 #include <option_type.h>
 #include <options.h>
 #include <pricing_data.h>
 #include <types.h>
-
-#include "greeks.h"
 
 namespace solstice
 {
@@ -96,17 +95,16 @@ MarketSide Random::getRandomMarketSide()
 
 std::expected<pricing::PricerDepOrderData, String> Random::generateOrderData(Config& cfg)
 {
+    double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
+    int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
+    MarketSide mktSide = Random::getRandomMarketSide();
+
     AssetClass assetClass = cfg.assetClass();
 
     if (assetClass == AssetClass::Option)
     {
-        return std::unexpected(
-            "generateOrderData is not appropriate for options. Use generateOptionData instead.");
+        assetClass = AssetClass::Equity;
     }
-
-    double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
-    int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
-    MarketSide mktSide = Random::getRandomMarketSide();
 
     switch (assetClass)
     {

@@ -47,6 +47,10 @@ TEST(OrchestratorTests, StartSucceeds)
 {
     std::optional<broadcaster::Broadcaster> broadcaster;
     auto result = Orchestrator::start(broadcaster);
+    if (!result.has_value())
+    {
+        std::cout << "Error: " << result.error() << std::endl;
+    }
     ASSERT_TRUE(result.has_value());
 }
 

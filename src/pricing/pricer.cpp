@@ -6,9 +6,10 @@
 #include <option_type.h>
 #include <order_type.h>
 #include <pricer.h>
+#include <pricing_data.h>
+#include <pricing_utils.h>
 #include <time_point.h>
 #include <types.h>
-#include <pricing_utils.h>
 
 #include <cmath>
 #include <numbers>
@@ -41,6 +42,17 @@ constexpr double EQUITY_DECAY_FACTOR = 0.94;
 constexpr double FUTURE_INITIAL_SPREAD_PCT = 0.01;            // 1% initial spread
 constexpr double FUTURE_BASE_SPREAD_PCT = 0.005;              // 0.5% base spread
 constexpr double FUTURE_VOLATILITY_SPREAD_MULTIPLIER = 0.01;  // Volatility impact on spread
+
+// option pricing calc constants
+constexpr double OPTION_INITIAL_SPREAD_PCT = 0.05;  // 5% initial spread (wider than equities)
+constexpr double OPTION_BASE_SPREAD_PCT = 0.02;     // 2% base spread
+constexpr double OPTION_VOLATILITY_SPREAD_MULTIPLIER = 0.03;  // Volatility impact on spread
+constexpr double OPTION_SPREAD_ADJUSTMENT_WEIGHT = 0.90;      // Current spread weight in adjustment
+constexpr double OPTION_TARGET_ADJUSTMENT_WEIGHT = 0.10;      // Target spread weight in adjustment
+constexpr double OPTION_MIN_EXEC_FOR_SPREAD_CALC = 5;  // Min executions before spread calculation
+constexpr double OPTION_MONEYNESS_SPREAD_MULTIPLIER = 0.02;  // OTM options have wider spreads
+constexpr double OPTION_TIME_DECAY_SPREAD_MULTIPLIER =
+    0.01;  // Near-expiry options have wider spreads
 
 // price calc constants
 constexpr double INSIDE_SPREAD_SHIFT_FACTOR = 0.5;  // 50% of half-spread for shift
@@ -403,16 +415,66 @@ double Pricer::calculateMarketPrice(Future fut, MarketSide mktSide)
     return calculateMarketPriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
 }
 
-double Pricer::calculateMarketPrice(Option opt, MarketSide mktSide)
+double Pricer::calculateMarketPrice(PricerDepOptionData optInfo, double theoreticalPrice,
+                                    MarketSide mktSide)
 {
-    // TODO
+    OptionPriceData& priceData = orderBook()->getPriceData(optInfo.optionTicker());
+
+    auto equityData = orderBook()->getPriceData(optInfo.underlyingEquity());
+    double spot = equityData.lastPrice();
+    double strike = optInfo.strike();
+    double moneyness = std::abs(spot - strike) / spot;
+
+    // higher timeDecayFactor for options closer to expiry
+    double timeDecayFactor = 1.0 / std::max(0.1, optInfo.expiry());
+
+    double spreadWidth;
+
+    if (priceData.highestBid() == 0.0 && priceData.lowestAsk() == 0.0)
+    {
+        spreadWidth = theoreticalPrice * OPTION_INITIAL_SPREAD_PCT;
+        spreadWidth *= (1.0 + moneyness * OPTION_MONEYNESS_SPREAD_MULTIPLIER);
+
+        priceData.highestBid(theoreticalPrice - spreadWidth / 2);
+        priceData.lowestAsk(theoreticalPrice + spreadWidth / 2);
+    }
+    else if (priceData.executions() >= OPTION_MIN_EXEC_FOR_SPREAD_CALC)
+    {
+        double sigma = priceData.standardDeviation(priceData);
+
+        spreadWidth = theoreticalPrice *
+                      (OPTION_BASE_SPREAD_PCT + sigma * OPTION_VOLATILITY_SPREAD_MULTIPLIER);
+
+        // wider spread for OTM options and near expiry
+        spreadWidth *= (1.0 + moneyness * OPTION_MONEYNESS_SPREAD_MULTIPLIER);
+        spreadWidth *= (1.0 + timeDecayFactor * OPTION_TIME_DECAY_SPREAD_MULTIPLIER);
+
+        double targetBid = theoreticalPrice - spreadWidth / 2;
+        double targetAsk = theoreticalPrice + spreadWidth / 2;
+
+        priceData.highestBid(priceData.highestBid() * OPTION_SPREAD_ADJUSTMENT_WEIGHT +
+                             targetBid * OPTION_TARGET_ADJUSTMENT_WEIGHT);
+        priceData.lowestAsk(priceData.lowestAsk() * OPTION_SPREAD_ADJUSTMENT_WEIGHT +
+                            targetAsk * OPTION_TARGET_ADJUSTMENT_WEIGHT);
+    }
+    else
+    {
+        // not enough executions yet so use theoretical price with initial spread
+        spreadWidth = theoreticalPrice * OPTION_INITIAL_SPREAD_PCT;
+        spreadWidth *= (1.0 + moneyness * OPTION_MONEYNESS_SPREAD_MULTIPLIER);
+
+        priceData.highestBid(theoreticalPrice - spreadWidth / 2);
+        priceData.lowestAsk(theoreticalPrice + spreadWidth / 2);
+    }
+
+    return calculateMarketPriceImpl(mktSide, priceData.lowestAsk(), priceData.highestBid(),
+                                    priceData.demandFactor());
 }
 
 int Pricer::calculateQnty(Equity eq, MarketSide mktSide, double price)
 {
     EquityPriceData data = orderBook()->getPriceData(eq);
     double n = data.executions();
-
     double demandScale = MIN_DEMAND_SCALE + (MAX_DEMAND_SCALE * std::abs(data.demandFactor()));
 
     double sigma = n > 1 ? data.standardDeviation(data) : 0;
@@ -435,7 +497,6 @@ int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
     double volAdjustment = std::min(sigma, MAX_VOL_ADJUSTMENT);
 
     int maxQuantity = baseOrderValue * demandScale / (price * (1 + volAdjustment));
-
     if (maxQuantity < MIN_QUANTITY_THRESHOLD)
         return Random::getRandomInt(MIN_QUANTITY, MIN_QUANTITY_THRESHOLD);
 
@@ -444,31 +505,82 @@ int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
 
 int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
 {
-    // TODO
+    OptionPriceData data = orderBook()->getPriceData(opt);
+    double n = data.executions();
+    double demandScale = MIN_DEMAND_SCALE + (MAX_DEMAND_SCALE * std::abs(data.demandFactor()));
+
+    double sigma = n > 1 ? data.standardDeviation(data) : 0;
+    double volAdjustment = std::min(sigma, MAX_VOL_ADJUSTMENT);
+
+    int maxQuantity = baseOrderValue * demandScale / (price * (1 + volAdjustment));
+    if (maxQuantity < MIN_QUANTITY_THRESHOLD)
+        return Random::getRandomInt(MIN_QUANTITY, MIN_QUANTITY_THRESHOLD);
+
+    return Random::getRandomInt(MIN_QUANTITY, maxQuantity);
 }
 
 double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
 {
+    double strikeLowerBound;
+    double strikeUpperBound;
+    double strike;
+
     auto equityPriceData = orderBook()->getPriceData(data.underlyingEquity());
+    double spot = equityPriceData.lastPrice();
+
+    // integer to determine if option is OTM, ATM or ITM
+    double moneyness = Random::getRandomInt(1, 100);
 
     if (data.optionType() == OptionType::Call)
     {
-        // more options with strike higher than current spot price (OTM)
+        if (moneyness <= 25)
+        {
+            // ITM, strike > spot
+            strikeLowerBound = spot + (0.01 * spot);
+            strikeUpperBound = spot + (0.15 * spot);
+        }
+        else if (moneyness > 25 && moneyness <= 95)
+        {
+            // OTM, strike < spot
+            strikeLowerBound = spot - (0.01 * spot);
+            strikeUpperBound = spot - (0.15 * spot);
+        }
+        else  // > 95
+        {
+            // ATM, strike == spot
+            strikeLowerBound = spot - (0.005 * spot);
+            strikeUpperBound = spot + (0.005 * spot);
+        }
     }
     else  // PUT
     {
-        // more options with strike lower than current spot price (OTM)
+        if (moneyness <= 25)
+        {
+            // ITM, strike < spot
+            strikeLowerBound = spot - (0.01 * spot);
+            strikeUpperBound = spot - (0.15 * spot);
+        }
+        else if (moneyness > 25 && moneyness <= 95)
+        {
+            // OTM, strike > spot
+            strikeLowerBound = spot + (0.01 * spot);
+            strikeUpperBound = spot + (0.15 * spot);
+        }
+        else  // > 95
+        {
+            // ATM, strike == spot
+            strikeLowerBound = spot - (0.005 * spot);
+            strikeUpperBound = spot + (0.005 * spot);
+        }
     }
 
-    // TODO
+    // band increment, usually ~1% of spot price (e.g. $2.50 for $250 AAPL stock)
+    double bandIncrement = getBandIncrement(spot);
+    strike = Random::getRandomDouble(strikeLowerBound, strikeUpperBound);
 
-    // NOTES:
-    // - Call OTM = strike > spot
-    // - Put OTM = strike < spot
-    // - ~70% OTM, ~25% ITM, ~5% ATM
-    // - Implement band calculation for sstandard strike increments based on price
-    // - Increments every 0.1% of stock price, (e.g. $2.50 for $250 AAPL stock),
-    //   with a range of 10-15%
+    // round off strike to nearest band
+    strike = std::round(strike / bandIncrement) * bandIncrement;
+    return strike;
 }
 
 PricerDepOptionData Pricer::computeOptionData(Option opt)
@@ -478,11 +590,10 @@ PricerDepOptionData Pricer::computeOptionData(Option opt)
 
     data.optionTicker(opt);
     data.underlyingEquity(*extractUnderlyingEquity(opt));
-    data.marketSide(Random::getRandomMarketSide());
+    data.strike(calculateStrikeImpl(data));
+    data.marketSide(calculateMarketSide(opt));
     data.optionType(Random::getRandomOptionType());
     data.expiry(timeToExpiry(opt));
-
-    data.strike(calculateStrikeImpl(data));
 
     return data;
 }
@@ -497,6 +608,14 @@ double Pricer::computeBlackScholes(PricerDepOptionData& optionData)
     // r is already defined as a constant at the top of the file
 
     double T = optionData.expiry();
+
+    // Guard against division by zero when volatility is very low
+    // Use a minimum volatility of 1% to avoid numerical instability
+    constexpr double MIN_SIGMA = 0.01;
+    if (sigma < MIN_SIGMA)
+    {
+        sigma = MIN_SIGMA;
+    }
 
     const double numeratorD1 = std::log(S / K) + (r + sigma * sigma / 2) * T;
     const double denominatorD1 = sigma * std::sqrt(T);

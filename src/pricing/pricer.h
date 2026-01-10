@@ -75,13 +75,22 @@ class Pricer
         }
 
         return std::visit(
-            [this, &underlying](auto&& underlyingValue)
+            [this, &underlying](auto&& underlyingValue) -> std::expected<PricerDepOrderData, String>
             {
-                auto marketSide = calculateMarketSide(underlyingValue);
-                auto price = calculateMarketPrice(underlyingValue, marketSide);
-                auto qnty = calculateQnty(underlyingValue, marketSide, price);
-
-                return PricerDepOrderData(underlying, marketSide, price, qnty);
+                using T = std::decay_t<decltype(underlyingValue)>;
+                if constexpr (std::is_same_v<T, Option>)
+                {
+                    return std::unexpected(
+                        "computeOrderData is not appropriate for options. Use computeOptionData "
+                        "instead.");
+                }
+                else
+                {
+                    auto marketSide = calculateMarketSide(underlyingValue);
+                    auto price = calculateMarketPrice(underlyingValue, marketSide);
+                    auto qnty = calculateQnty(underlyingValue, marketSide, price);
+                    return PricerDepOrderData(underlying, marketSide, price, qnty);
+                }
             },
             underlying);
     }
@@ -97,7 +106,8 @@ class Pricer
     // propogate results from market side calc
     double calculateMarketPrice(Equity eq, MarketSide mktSide);
     double calculateMarketPrice(Future fut, MarketSide mktSide);
-    double calculateMarketPrice(Option opt, MarketSide mktSide);
+    double calculateMarketPrice(PricerDepOptionData data, double theoreticalPrice,
+                                MarketSide mktSide);
 
     double calculateMarketPriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
                                     double demandFactor);

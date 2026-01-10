@@ -31,6 +31,7 @@ class Matcher
     double getDealPrice(OrderPtr firstOrder, OrderPtr secondOrder) const;
     String matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matchedOrder,
                               double matchedPrice) const;
+    bool canMatchOptions(OrderPtr incomingOrder, OrderPtr candidateOrder) const;
 
     std::shared_ptr<OrderBook> d_orderBook;
 };

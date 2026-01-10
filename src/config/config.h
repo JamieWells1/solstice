@@ -65,14 +65,19 @@ struct Config
     static std::expected<void, String> checkConfig(Config& config);
 
     // set sim log level
-    LogLevel d_logLevel = LogLevel::DEBUG;
+    LogLevel d_logLevel = LogLevel::INFO;
 
     // asset class to use in sim
     // if set to option, an underlying equity will be generated for each generated option
     AssetClass d_assetClass = AssetClass::Option;
 
     // number of orders to generate in sim -- set to -1 for infinite orders
-    int d_ordersToGenerate = 100;
+    // NOTE: if d_assetClass is set to options, the specified amount of orders will be the number of
+    // underlying equity orders generated, with the number of options orders being generated
+    // determined by EQUITY_OPTION_ORDER_RATIO in orchestrator.cpp
+    // e.g. if d_ordersToGenerate = 100 and EQUITY_OPTION_ORDER_RATIO = 5, 100 equity orders are
+    // generated and 20 options orders are generated.
+    int d_ordersToGenerate = 10000;
 
     // how many variations of underlying asset class to use in sim (e.g. AAPL, MSFT etc)
     int d_underlyingPoolCount = 10;
@@ -89,14 +94,16 @@ struct Config
     // maximum price for randomly generated orders (only applicable if d_usePricer = false)
     double d_maxPrice = 10.0;
 
-    // minimum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    // minimum days until expiry for randomly generated options (only applicable if d_usePricer =
+    // false)
     int d_minExpiryDays = 7;
 
-    // maximum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    // maximum days until expiry for randomly generated options (only applicable if d_usePricer =
+    // false)
     int d_maxExpiryDays = 90;
 
     // enable use of pricer when generating orders
-    bool d_usePricer = false;
+    bool d_usePricer = true;
 
     // enable outbound LAN web broadcaster
     bool d_enableBroadcaster = false;

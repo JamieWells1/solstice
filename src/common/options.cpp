@@ -1,5 +1,6 @@
 #include <asset_class.h>
 #include <greeks.h>
+#include <market_side.h>
 #include <options.h>
 #include <order.h>
 #include <pricer.h>
@@ -39,8 +40,10 @@ OptionOrder::OptionOrder(int uid, Option optionTicker, Equity underlyingEquity, 
                          int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
                          OptionType optionType, double expiry)
     : Order(uid, optionTicker, price, qnty, marketSide, timeOrderPlaced),
+      d_underlyingEquity(underlyingEquity),
       d_strike(strike),
-      d_optionType(optionType)
+      d_optionType(optionType),
+      d_expiry(expiry)
 {
 }
 
@@ -73,11 +76,18 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
     std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker)
 {
     auto optionData = pricer->computeOptionData(optionTicker);
-    double optionPrice = pricer->computeBlackScholes(optionData);
+    const double theoreticalPrice = pricer->computeBlackScholes(optionData);
 
-    auto opt = OptionOrder::create(uid, optionTicker, optionPrice, optionData.qnty(),
-                                   optionData.marketSide(), timeNow(), optionData.strike(),
-                                   optionData.optionType(), optionData.expiry());
+    // calculate actual market price, theoretical price as input
+    const double marketPrice =
+        pricer->calculateMarketPrice(optionData, theoreticalPrice, optionData.marketSide());
+
+    // qnty is calculated from price, so compute last
+    optionData.qnty(pricer->calculateQnty(optionTicker, optionData.marketSide(), marketPrice));
+
+    const auto opt = OptionOrder::create(uid, optionTicker, marketPrice, optionData.qnty(),
+                                         optionData.marketSide(), timeNow(), optionData.strike(),
+                                         optionData.optionType(), optionData.expiry());
     if (!opt)
     {
         return std::unexpected(opt.error());

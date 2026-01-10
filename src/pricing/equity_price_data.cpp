@@ -55,9 +55,6 @@ void EquityPriceData::updateVolatility(double newPrice)
     d_previousPrice = newPrice;
 }
 
-double EquityPriceData::volatility() const
-{
-    return std::sqrt(d_varianceEWMA * 252.0);
-}
+double EquityPriceData::volatility() const { return std::sqrt(d_varianceEWMA * 252.0); }
 
 }  // namespace solstice::pricing

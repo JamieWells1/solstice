@@ -60,6 +60,10 @@ std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Conf
                                                                             Underlying underlying)
 {
     auto data = Random::generateOrderData(cfg);
+    if (!data)
+    {
+        return std::unexpected(data.error());
+    }
     return Order::create(uid, underlying, data->price(), data->qnty(), data->marketSide());
 }
 
@@ -95,7 +99,7 @@ MarketSide Order::marketSide() const { return d_marketSide; }
 
 String Order::marketSideString() const
 {
-    return d_marketSide == solstice::MarketSide::Bid ? "Bid" : "ask";
+    return d_marketSide == solstice::MarketSide::Bid ? "Bid" : "Ask";
 }
 
 TimePoint Order::timeOrderPlaced() const { return d_timeOrderPlaced; }
@@ -106,10 +110,7 @@ double Order::matchedPrice() const { return d_matchedPrice; }
 
 // setters
 
-void Order::price(double newPrice)
-{
-    d_price = newPrice;
-}
+void Order::price(double newPrice) { d_price = newPrice; }
 
 void Order::matched(bool isFulfilled) { d_matched = isFulfilled; }
 

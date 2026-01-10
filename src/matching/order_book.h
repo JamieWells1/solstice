@@ -2,13 +2,13 @@
 #define ORDERBOOK_H
 
 #include <asset_class.h>
+#include <equity_price_data.h>
+#include <future_price_data.h>
 #include <market_side.h>
+#include <option_price_data.h>
 #include <order.h>
 #include <transaction.h>
 #include <types.h>
-#include <equity_price_data.h>
-#include <future_price_data.h>
-#include <option_price_data.h>
 
 #include <deque>
 #include <functional>
@@ -22,7 +22,7 @@ namespace solstice::pricing
 class EquityPriceData;
 class FuturePriceData;
 class OptionPriceData;
-}
+}  // namespace solstice::pricing
 
 namespace solstice::matching
 {

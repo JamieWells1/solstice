@@ -8,6 +8,8 @@ namespace solstice::pricing
 
 double N(double x);
 
+double getBandIncrement(double spotPrice);
+
 template <typename PriceData>
 void setInitialDemandFactor(PriceData& underlying)  // type
 {

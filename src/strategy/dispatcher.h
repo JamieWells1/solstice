@@ -1,9 +1,9 @@
 #ifndef DISPATCHER_H
 #define DISPATCHER_H
 
+#include <account.h>
 #include <market_data.h>
 #include <strategy.h>
-#include <account.h>
 
 #include <memory>
 

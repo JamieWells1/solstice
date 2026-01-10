@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <matcher.h>
+#include <options.h>
 #include <order_book.h>
 
 namespace solstice::matching
@@ -125,6 +126,93 @@ TEST_F(MatcherFixture, MatchOrderWithIncomingOrderLargerThanResting)
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ((*askOrder)->outstandingQnty(), 0);
     EXPECT_EQ((*bidOrder)->outstandingQnty(), 5.0);
+}
+
+class OptionMatcherFixture : public ::testing::Test
+{
+   protected:
+    std::shared_ptr<OrderBook> orderBook;
+    std::shared_ptr<Matcher> matcher;
+
+    void SetUp() override
+    {
+        orderBook = std::make_shared<OrderBook>();
+        matcher = std::make_shared<Matcher>(orderBook);
+
+        std::vector<Option> optionPool = {Option::AAPL_JUN26_C};
+        d_underlyingsPool<Option> = optionPool;
+        d_underlyingsPoolInitialised<Option> = true;
+        orderBook->initialiseBookAtUnderlyings<Option>();
+    }
+
+    void TearDown() override
+    {
+        d_underlyingsPool<Option> = {};
+        d_underlyingsPoolInitialised<Option> = false;
+    }
+};
+
+TEST_F(OptionMatcherFixture, OptionsMatchWhenAllAttributesMatch)
+{
+    auto bidOption = OptionOrder::create(1, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Bid,
+                                         timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(bidOption.has_value());
+    orderBook->addOrderToBook(*bidOption);
+
+    auto askOption = OptionOrder::create(2, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Ask,
+                                         timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(askOption.has_value());
+
+    auto result = matcher->matchOrder(*askOption);
+    ASSERT_TRUE(result.has_value());
+}
+
+TEST_F(OptionMatcherFixture, OptionsDoNotMatchWhenStrikeDiffers)
+{
+    auto bidOption = OptionOrder::create(1, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Bid,
+                                         timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(bidOption.has_value());
+    orderBook->addOrderToBook(*bidOption);
+
+    auto askOption = OptionOrder::create(2, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Ask,
+                                         timeNow(), 155.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(askOption.has_value());
+
+    auto result = matcher->matchOrder(*askOption);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_TRUE(result.error().find("matching strike") != String::npos);
+}
+
+TEST_F(OptionMatcherFixture, OptionsDoNotMatchWhenExpiryDiffers)
+{
+    auto bidOption = OptionOrder::create(1, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Bid,
+                                         timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(bidOption.has_value());
+    orderBook->addOrderToBook(*bidOption);
+
+    auto askOption = OptionOrder::create(2, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Ask,
+                                         timeNow(), 150.0, OptionType::Call, 0.75);
+    ASSERT_TRUE(askOption.has_value());
+
+    auto result = matcher->matchOrder(*askOption);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_TRUE(result.error().find("matching strike") != String::npos);
+}
+
+TEST_F(OptionMatcherFixture, OptionsDoNotMatchWhenTypeDiffers)
+{
+    auto bidOption = OptionOrder::create(1, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Bid,
+                                         timeNow(), 150.0, OptionType::Call, 0.5);
+    ASSERT_TRUE(bidOption.has_value());
+    orderBook->addOrderToBook(*bidOption);
+
+    auto askOption = OptionOrder::create(2, Option::AAPL_JUN26_C, 5.0, 10, MarketSide::Ask,
+                                         timeNow(), 150.0, OptionType::Put, 0.5);
+    ASSERT_TRUE(askOption.has_value());
+
+    auto result = matcher->matchOrder(*askOption);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_TRUE(result.error().find("matching strike") != String::npos);
 }
 
 }  // namespace solstice::matching
