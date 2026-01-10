@@ -1,5 +1,6 @@
 #include <market_side.h>
 #include <matcher.h>
+#include <option_type.h>
 #include <options.h>
 #include <order.h>
 #include <order_book.h>
@@ -8,9 +9,30 @@
 #include <expected>
 #include <iostream>
 #include <memory>
+#include <sstream>
 
 namespace solstice::matching
 {
+
+String formatOptionDetailsForLogging(OrderPtr order)
+{
+    if (order->assetClass() != AssetClass::Option)
+    {
+        return "";
+    }
+
+    auto optionOrder = std::dynamic_pointer_cast<OptionOrder>(order);
+    if (!optionOrder)
+    {
+        return "";
+    }
+
+    std::ostringstream oss;
+    oss << " | Strike: $" << optionOrder->strike() << " | Type: "
+        << (optionOrder->optionType() == OptionType::Call ? "Call" : "Put") << " | Expiry: "
+        << optionOrder->expiry() << "y";
+    return oss.str();
+}
 
 bool Matcher::withinPriceRange(double price, OrderPtr order) const
 {
@@ -61,7 +83,8 @@ String Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matchedOrder
         << " | Side: " << incomingOrder->marketSideString()
         << " | Ticker: " << to_string(incomingOrder->underlying()) << " | Price: $"
         << incomingOrder->price() << " | Qnty: " << incomingOrder->qnty()
-        << " | Remaining Qnty: " << incomingOrder->outstandingQnty();
+        << " | Remaining Qnty: " << incomingOrder->outstandingQnty()
+        << formatOptionDetailsForLogging(incomingOrder);
 
     if (incomingOrder->outstandingQnty() == 0)
     {
@@ -76,7 +99,8 @@ String Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matchedOrder
         << " | Side: " << matchedOrder->marketSideString()
         << " | Ticker: " << to_string(matchedOrder->underlying()) << " | Price: $"
         << matchedOrder->price() << " | Qnty: " << matchedOrder->qnty()
-        << " | Remaining Qnty: " << matchedOrder->outstandingQnty();
+        << " | Remaining Qnty: " << matchedOrder->outstandingQnty()
+        << formatOptionDetailsForLogging(matchedOrder);
 
     if (matchedOrder->outstandingQnty() == 0)
     {

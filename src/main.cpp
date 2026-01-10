@@ -6,6 +6,8 @@
 #include <iostream>
 #include <optional>
 
+#include "log_level.h"
+
 using namespace solstice;
 
 int main()
@@ -33,7 +35,7 @@ int main()
     {
         auto response = matching::Orchestrator::start(broadcaster);
 
-        if (!response)
+        if (!response && config->logLevel() <= LogLevel::ERROR)
         {
             std::cout << "\n[FATAL]: " << response.error() << std::endl;
             return -1;

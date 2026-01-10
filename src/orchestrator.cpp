@@ -3,6 +3,7 @@
 #include <log_level.h>
 #include <logging.h>
 #include <market_side.h>
+#include <option_type.h>
 #include <options.h>
 #include <orchestrator.h>
 #include <order.h>
@@ -14,13 +15,34 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <thread>
 #include <utility>
 
 namespace solstice::matching
 {
 
-constexpr int EQUITY_OPTION_ORDER_RATIO = 10;
+constexpr int EQUITY_OPTION_ORDER_RATIO = 2;
+
+String formatOptionDetails(OrderPtr order)
+{
+    if (order->assetClass() != AssetClass::Option)
+    {
+        return "";
+    }
+
+    auto optionOrder = std::dynamic_pointer_cast<OptionOrder>(order);
+    if (!optionOrder)
+    {
+        return "";
+    }
+
+    std::ostringstream oss;
+    oss << " | Strike: $" << optionOrder->strike()
+        << " | Type: " << (optionOrder->optionType() == OptionType::Call ? "Call" : "Put")
+        << " | Expiry: " << optionOrder->expiry() << "y";
+    return oss.str();
+}
 
 Orchestrator::Orchestrator(Config config, std::shared_ptr<OrderBook> orderBook,
                            std::shared_ptr<Matcher> matcher,
@@ -56,7 +78,6 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
 
     if (config().assetClass() == AssetClass::Option)
     {
-        std::expected<OrderPtr, String> optionOrder;
         auto option = std::get<Option>(*underlying);
 
         auto underlyingEquity = extractUnderlyingEquity(option);
@@ -65,43 +86,48 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
             return std::unexpected(underlyingEquity.error());
         }
 
-        for (size_t i = 0; i < EQUITY_OPTION_ORDER_RATIO; i++)
-        {
-            std::expected<OrderPtr, String> equityOrder;
-            if (config().usePricer())
-            {
-                equityOrder = Order::createWithPricer(pricer(), ordersGenerated, *underlyingEquity);
-            }
-            else
-            {
-                equityOrder =
-                    Order::createWithRandomValues(config(), ordersGenerated, *underlyingEquity);
-            }
-            if (!equityOrder)
-            {
-                return std::unexpected(equityOrder.error());
-            }
-
-            ordersGenerated++;
-            orders.emplace_back(*equityOrder);
-        }
-
+        std::expected<OrderPtr, String> equityOrder;
         if (config().usePricer())
         {
-            optionOrder = OptionOrder::createWithPricer(pricer(), ordersGenerated, option);
+            equityOrder = Order::createWithPricer(pricer(), ordersGenerated, *underlyingEquity);
         }
         else
         {
-            optionOrder = OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
+            equityOrder =
+                Order::createWithRandomValues(config(), ordersGenerated, *underlyingEquity);
         }
 
-        if (!optionOrder)
+        if (!equityOrder)
         {
-            return std::unexpected(optionOrder.error());
+            return std::unexpected(equityOrder.error());
         }
 
         ordersGenerated++;
-        orders.emplace_back(*optionOrder);
+        orders.emplace_back(*equityOrder);
+
+        // Generate option order only at the specified ratio
+        if (ordersGenerated % static_cast<int>((std::round((EQUITY_OPTION_ORDER_RATIO + 1) * 10) / 10)) ==
+            0 && ordersGenerated != 0)
+        {
+            std::expected<OrderPtr, String> optionOrder;
+            if (config().usePricer())
+            {
+                optionOrder = OptionOrder::createWithPricer(pricer(), ordersGenerated, option);
+            }
+            else
+            {
+                optionOrder =
+                    OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
+            }
+
+            if (!optionOrder)
+            {
+                return std::unexpected(optionOrder.error());
+            }
+
+            ordersGenerated++;
+            orders.emplace_back(*optionOrder);
+        }
     }
     else
     {
@@ -155,7 +181,8 @@ bool Orchestrator::processOrder(OrderPtr order)
                           << " | Ticker: " << to_string(order->underlying()) << " | Price: $"
                           << order->price() << " | Qnty: " << order->qnty()
                           << " | Remaining Qnty: " << order->outstandingQnty()
-                          << " | Reason: " << orderMatched.error() << "\n";
+                          << formatOptionDetails(order) << " | Reason: " << orderMatched.error()
+                          << "\n";
             }
 
             return false;
@@ -198,9 +225,9 @@ bool Orchestrator::processOrder(OrderPtr order)
                           << " | Ticker: " << to_string(order->underlying()) << " | Price: $"
                           << order->price() << " | Qnty: " << order->qnty()
                           << " | Remaining Qnty: " << order->outstandingQnty()
-                          << " | Reason: " << orderMatched.error() << "\n";
+                          << formatOptionDetails(order) << " | Reason: " << orderMatched.error()
+                          << "\n";
             }
-
             return false;
         }
         else
@@ -210,7 +237,6 @@ bool Orchestrator::processOrder(OrderPtr order)
                 std::lock_guard<std::mutex> outputLock(d_outputMutex);
                 std::cout << *orderMatched;
             }
-
             return true;
         }
     }
