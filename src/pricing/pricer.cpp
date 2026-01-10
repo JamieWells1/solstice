@@ -6,6 +6,7 @@
 #include <option_type.h>
 #include <order_type.h>
 #include <pricer.h>
+#include <pricing_data.h>
 #include <pricing_utils.h>
 #include <time_point.h>
 #include <types.h>
@@ -13,8 +14,6 @@
 #include <cmath>
 #include <numbers>
 #include <unordered_map>
-
-#include "pricing_data.h"
 
 namespace solstice::pricing
 {
@@ -609,6 +608,14 @@ double Pricer::computeBlackScholes(PricerDepOptionData& optionData)
     // r is already defined as a constant at the top of the file
 
     double T = optionData.expiry();
+
+    // Guard against division by zero when volatility is very low
+    // Use a minimum volatility of 1% to avoid numerical instability
+    constexpr double MIN_SIGMA = 0.01;
+    if (sigma < MIN_SIGMA)
+    {
+        sigma = MIN_SIGMA;
+    }
 
     const double numeratorD1 = std::log(S / K) + (r + sigma * sigma / 2) * T;
     const double denominatorD1 = sigma * std::sqrt(T);

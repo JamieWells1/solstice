@@ -1,5 +1,6 @@
 #include <market_side.h>
 #include <matcher.h>
+#include <options.h>
 #include <order.h>
 #include <order_book.h>
 #include <types.h>
@@ -86,6 +87,28 @@ String Matcher::matchSuccessOutput(OrderPtr incomingOrder, OrderPtr matchedOrder
     return oss.str();
 }
 
+bool Matcher::canMatchOptions(OrderPtr incomingOrder, OrderPtr candidateOrder) const
+{
+    if (incomingOrder->assetClass() != AssetClass::Option)
+    {
+        return true;
+    }
+
+    auto incomingOption = std::dynamic_pointer_cast<OptionOrder>(incomingOrder);
+    auto candidateOption = std::dynamic_pointer_cast<OptionOrder>(candidateOrder);
+
+    if (!incomingOption || !candidateOption)
+    {
+        return false;
+    }
+
+    // Check if strike, underlying equity, expiry, and option type match
+    return incomingOption->strike() == candidateOption->strike() &&
+           incomingOption->underlyingEquity() == candidateOption->underlyingEquity() &&
+           incomingOption->expiry() == candidateOption->expiry() &&
+           incomingOption->optionType() == candidateOption->optionType();
+}
+
 std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
                                                   double orderMatchingPrice) const
 {
@@ -124,6 +147,13 @@ std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
     if (ordersAtBestPrice.size() == 1 && bestOrder->uid() == incomingOrder->uid())
     {
         return std::unexpected("Orders cannot match themselves\n");
+    }
+
+    // For options, check if strike, underlying, expiry, and option type match
+    if (!canMatchOptions(incomingOrder, bestOrder))
+    {
+        return std::unexpected(
+            "Option orders must have matching strike, underlying equity, expiry, and option type\n");
     }
     if (bestOrder->outstandingQnty() < incomingOrder->outstandingQnty())
     {

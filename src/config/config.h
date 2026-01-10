@@ -98,7 +98,7 @@ struct Config
     int d_maxExpiryDays = 90;
 
     // enable use of pricer when generating orders
-    bool d_usePricer = false;
+    bool d_usePricer = true;
 
     // enable outbound LAN web broadcaster
     bool d_enableBroadcaster = false;

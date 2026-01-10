@@ -1,5 +1,6 @@
 #include <asset_class.h>
 #include <greeks.h>
+#include <market_side.h>
 #include <options.h>
 #include <order.h>
 #include <pricer.h>
@@ -7,8 +8,6 @@
 #include <types.h>
 
 #include <format>
-
-#include "market_side.h"
 
 namespace solstice
 {
@@ -41,8 +40,10 @@ OptionOrder::OptionOrder(int uid, Option optionTicker, Equity underlyingEquity, 
                          int qnty, MarketSide marketSide, TimePoint timeOrderPlaced, double strike,
                          OptionType optionType, double expiry)
     : Order(uid, optionTicker, price, qnty, marketSide, timeOrderPlaced),
+      d_underlyingEquity(underlyingEquity),
       d_strike(strike),
-      d_optionType(optionType)
+      d_optionType(optionType),
+      d_expiry(expiry)
 {
 }
 

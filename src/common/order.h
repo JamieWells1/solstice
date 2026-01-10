@@ -22,6 +22,8 @@ namespace solstice
 class Order
 {
    public:
+    virtual ~Order() = default;
+
     static std::expected<std::shared_ptr<Order>, String> create(int uid, Underlying underlying,
                                                                 double price, int qnty,
                                                                 MarketSide marketSide);

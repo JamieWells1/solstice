@@ -112,7 +112,7 @@ TEST(OrderTests, MarketSideStringReturnsCorrectValue)
 
     auto askResult = Order::create(0, Equity::AAPL, 100.0, 10.0, MarketSide::Ask);
     ASSERT_TRUE(askResult.has_value());
-    EXPECT_EQ(askResult.value()->marketSideString(), "ask");
+    EXPECT_EQ(askResult.value()->marketSideString(), "Ask");
 }
 
 TEST(OrderTests, ZeroPriceIsValid)

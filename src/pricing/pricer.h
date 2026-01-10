@@ -75,13 +75,22 @@ class Pricer
         }
 
         return std::visit(
-            [this, &underlying](auto&& underlyingValue)
+            [this, &underlying](auto&& underlyingValue) -> std::expected<PricerDepOrderData, String>
             {
-                auto marketSide = calculateMarketSide(underlyingValue);
-                auto price = calculateMarketPrice(underlyingValue, marketSide);
-                auto qnty = calculateQnty(underlyingValue, marketSide, price);
-
-                return PricerDepOrderData(underlying, marketSide, price, qnty);
+                using T = std::decay_t<decltype(underlyingValue)>;
+                if constexpr (std::is_same_v<T, Option>)
+                {
+                    return std::unexpected(
+                        "computeOrderData is not appropriate for options. Use computeOptionData "
+                        "instead.");
+                }
+                else
+                {
+                    auto marketSide = calculateMarketSide(underlyingValue);
+                    auto price = calculateMarketPrice(underlyingValue, marketSide);
+                    auto qnty = calculateQnty(underlyingValue, marketSide, price);
+                    return PricerDepOrderData(underlying, marketSide, price, qnty);
+                }
             },
             underlying);
     }
