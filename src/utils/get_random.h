@@ -2,11 +2,11 @@
 #define GETRANDOM_H
 
 #include <config.h>
+#include <greeks.h>
 #include <market_side.h>
 #include <option_type.h>
 #include <pricing_data.h>
 #include <types.h>
-#include <greeks.h>
 
 #include <random>
 
@@ -38,7 +38,8 @@ class Random
     static double getRandomGamma();
     static double getRandomTheta();
     static double getRandomVega();
-    static std::expected<pricing::PricerDepOptionData, String> generateOptionData(const Config& cfg);
+    static std::expected<pricing::PricerDepOptionData, String> generateOptionData(
+        const Config& cfg);
     static pricing::Greeks generateGreeks(const pricing::PricerDepOptionData& data);
 
    private:

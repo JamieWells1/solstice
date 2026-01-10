@@ -106,10 +106,7 @@ double Order::matchedPrice() const { return d_matchedPrice; }
 
 // setters
 
-void Order::price(double newPrice)
-{
-    d_price = newPrice;
-}
+void Order::price(double newPrice) { d_price = newPrice; }
 
 void Order::matched(bool isFulfilled) { d_matched = isFulfilled; }
 

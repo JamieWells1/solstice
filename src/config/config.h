@@ -89,10 +89,12 @@ struct Config
     // maximum price for randomly generated orders (only applicable if d_usePricer = false)
     double d_maxPrice = 10.0;
 
-    // minimum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    // minimum days until expiry for randomly generated options (only applicable if d_usePricer =
+    // false)
     int d_minExpiryDays = 7;
 
-    // maximum days until expiry for randomly generated options (only applicable if d_usePricer = false)
+    // maximum days until expiry for randomly generated options (only applicable if d_usePricer =
+    // false)
     int d_maxExpiryDays = 90;
 
     // enable use of pricer when generating orders

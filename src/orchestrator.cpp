@@ -92,8 +92,7 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
         }
         else
         {
-            optionOrder =
-                OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
+            optionOrder = OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
         }
 
         if (!optionOrder)

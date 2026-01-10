@@ -97,7 +97,8 @@ class Pricer
     // propogate results from market side calc
     double calculateMarketPrice(Equity eq, MarketSide mktSide);
     double calculateMarketPrice(Future fut, MarketSide mktSide);
-    double calculateMarketPrice(Option opt, double theoreticalPrice, MarketSide mktSide);
+    double calculateMarketPrice(PricerDepOptionData data, double theoreticalPrice,
+                                MarketSide mktSide);
 
     double calculateMarketPriceImpl(MarketSide mktSide, double lowestAsk, double highestBid,
                                     double demandFactor);

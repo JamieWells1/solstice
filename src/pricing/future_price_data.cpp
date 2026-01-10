@@ -50,9 +50,6 @@ void FuturePriceData::updateVolatility(double newPrice)
     d_previousPrice = newPrice;
 }
 
-double FuturePriceData::volatility() const
-{
-    return std::sqrt(d_varianceEWMA * 252.0);
-}
+double FuturePriceData::volatility() const { return std::sqrt(d_varianceEWMA * 252.0); }
 
 }  // namespace solstice::pricing

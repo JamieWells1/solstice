@@ -17,4 +17,4 @@ std::ostream& operator<<(std::ostream& os, const OptionType& optionType);
 
 }  // namespace solstice
 
-#endif // OPTION_TYPE_H
+#endif  // OPTION_TYPE_H

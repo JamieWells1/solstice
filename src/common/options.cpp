@@ -78,7 +78,8 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
     const double theoreticalPrice = pricer->computeBlackScholes(optionData);
 
     // calculate actual market price, theoretical price as input
-    const double marketPrice = pricer->calculateMarketPrice(optionTicker, theoreticalPrice, optionData.marketSide());
+    const double marketPrice =
+        pricer->calculateMarketPrice(optionData, theoreticalPrice, optionData.marketSide());
 
     // qnty is calculated from price, so compute last
     optionData.qnty(pricer->calculateQnty(optionTicker, optionData.marketSide(), marketPrice));

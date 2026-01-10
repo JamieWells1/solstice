@@ -17,8 +17,6 @@ Report SharpMovements::execute()
     std::vector<double> lows = d_marketData.lows();
     std::vector<double> closes = d_marketData.closes();
     std::vector<double> timestamps = d_marketData.timestamps();
-
-    
 }
 
 }  // namespace solstice::strategy
