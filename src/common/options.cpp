@@ -8,6 +8,8 @@
 
 #include <format>
 
+#include "market_side.h"
+
 namespace solstice
 {
 
@@ -73,11 +75,17 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
     std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker)
 {
     auto optionData = pricer->computeOptionData(optionTicker);
-    double optionPrice = pricer->computeBlackScholes(optionData);
+    const double theoreticalPrice = pricer->computeBlackScholes(optionData);
 
-    auto opt = OptionOrder::create(uid, optionTicker, optionPrice, optionData.qnty(),
-                                   optionData.marketSide(), timeNow(), optionData.strike(),
-                                   optionData.optionType(), optionData.expiry());
+    // calculate actual market price, theoretical price as input
+    const double marketPrice = pricer->calculateMarketPrice(optionTicker, theoreticalPrice, optionData.marketSide());
+
+    // qnty is calculated from price, so compute last
+    optionData.qnty(pricer->calculateQnty(optionTicker, optionData.marketSide(), marketPrice));
+
+    const auto opt = OptionOrder::create(uid, optionTicker, marketPrice, optionData.qnty(),
+                                         optionData.marketSide(), timeNow(), optionData.strike(),
+                                         optionData.optionType(), optionData.expiry());
     if (!opt)
     {
         return std::unexpected(opt.error());

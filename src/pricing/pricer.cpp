@@ -403,16 +403,17 @@ double Pricer::calculateMarketPrice(Future fut, MarketSide mktSide)
     return calculateMarketPriceImpl(mktSide, adjustedAsk, adjustedBid, data.demandFactor());
 }
 
-double Pricer::calculateMarketPrice(Option opt, MarketSide mktSide)
+double Pricer::calculateMarketPrice(Option opt, double theoreticalPrice, MarketSide mktSide)
 {
     // TODO
+    // Given an option's market data and theoretical price, calculate its actual market price
+    OptionPriceData data = orderBook()->getPriceData(opt);
 }
 
 int Pricer::calculateQnty(Equity eq, MarketSide mktSide, double price)
 {
     EquityPriceData data = orderBook()->getPriceData(eq);
     double n = data.executions();
-
     double demandScale = MIN_DEMAND_SCALE + (MAX_DEMAND_SCALE * std::abs(data.demandFactor()));
 
     double sigma = n > 1 ? data.standardDeviation(data) : 0;
@@ -435,7 +436,6 @@ int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
     double volAdjustment = std::min(sigma, MAX_VOL_ADJUSTMENT);
 
     int maxQuantity = baseOrderValue * demandScale / (price * (1 + volAdjustment));
-
     if (maxQuantity < MIN_QUANTITY_THRESHOLD)
         return Random::getRandomInt(MIN_QUANTITY, MIN_QUANTITY_THRESHOLD);
 
@@ -444,7 +444,18 @@ int Pricer::calculateQnty(Future fut, MarketSide mktSide, double price)
 
 int Pricer::calculateQnty(Option opt, MarketSide mktSide, double price)
 {
-    // TODO
+    OptionPriceData data = orderBook()->getPriceData(opt);
+    double n = data.executions();
+    double demandScale = MIN_DEMAND_SCALE + (MAX_DEMAND_SCALE * std::abs(data.demandFactor()));
+
+    double sigma = n > 1 ? data.standardDeviation(data) : 0;
+    double volAdjustment = std::min(sigma, MAX_VOL_ADJUSTMENT);
+
+    int maxQuantity = baseOrderValue * demandScale / (price * (1 + volAdjustment));
+    if (maxQuantity < MIN_QUANTITY_THRESHOLD)
+        return Random::getRandomInt(MIN_QUANTITY, MIN_QUANTITY_THRESHOLD);
+
+    return Random::getRandomInt(MIN_QUANTITY, maxQuantity);
 }
 
 double Pricer::calculateStrikeImpl(PricerDepOptionData& data)
@@ -519,7 +530,7 @@ PricerDepOptionData Pricer::computeOptionData(Option opt)
     data.optionTicker(opt);
     data.underlyingEquity(*extractUnderlyingEquity(opt));
     data.strike(calculateStrikeImpl(data));
-    data.marketSide(Random::getRandomMarketSide());
+    data.marketSide(calculateMarketSide(opt));
     data.optionType(Random::getRandomOptionType());
     data.expiry(timeToExpiry(opt));
 
