@@ -12,14 +12,14 @@
 namespace solstice
 {
 
-std::expected<Equity, String> extractUnderlyingEquity(Option optionTicker)
+Resolution<Equity> extractUnderlyingEquity(Option optionTicker)
 {
     String optionString = to_string(optionTicker);
 
     size_t firstUnderscore = optionString.find('_');
     if (firstUnderscore == String::npos)
     {
-        return std::unexpected("Underlying option ticker is in an incorrect format.");
+        return resolution::err("Underlying option ticker is in an incorrect format.");
     }
 
     String equitySymbol = optionString.substr(0, firstUnderscore);
@@ -32,7 +32,7 @@ std::expected<Equity, String> extractUnderlyingEquity(Option optionTicker)
         }
     }
 
-    return std::unexpected(
+    return resolution::err(
         std::format("Extracted ticker: {} not found in list of equities.", equitySymbol));
 }
 
@@ -47,7 +47,7 @@ OptionOrder::OptionOrder(int uid, Option optionTicker, Equity underlyingEquity, 
 {
 }
 
-std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
+Resolution<std::shared_ptr<OptionOrder>> OptionOrder::create(
     int uid, Option optionTicker, double price, int qnty, MarketSide marketSide,
     TimePoint timeOrderPlaced, double strike, OptionType optionType, double expiry)
 {
@@ -56,13 +56,13 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
     auto isOrderValid = validateOrderAttributes(price, qnty, timeOrderPlaced);
     if (!isOrderValid)
     {
-        return std::unexpected(isOrderValid.error());
+        return resolution::err(isOrderValid.error());
     }
 
     auto underlyingEquity = extractUnderlyingEquity(optionTicker);
     if (!underlyingEquity)
     {
-        return std::unexpected(underlyingEquity.error());
+        return resolution::err(underlyingEquity.error());
     }
 
     auto optionOrder = std::shared_ptr<OptionOrder>(
@@ -72,7 +72,7 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::create(
     return optionOrder;
 }
 
-std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPricer(
+Resolution<std::shared_ptr<OptionOrder>> OptionOrder::createWithPricer(
     std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker)
 {
     auto optionData = pricer->computeOptionData(optionTicker);
@@ -90,7 +90,7 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
                                          optionData.optionType(), optionData.expiry());
     if (!opt)
     {
-        return std::unexpected(opt.error());
+        return resolution::err(opt.error());
     }
 
     auto greeks = pricer->computeGreeks(**opt);
@@ -99,22 +99,23 @@ std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithPrice
     return *opt;
 }
 
-std::expected<std::shared_ptr<OptionOrder>, String> OptionOrder::createWithRandomValues(
-    Config cfg, int uid, Option optionTicker)
+Resolution<std::shared_ptr<OptionOrder>> OptionOrder::createWithRandomValues(Config cfg, int uid,
+                                                                             Option optionTicker)
 {
     auto data = Random::generateOptionData(cfg);
     if (!data)
     {
-        return std::unexpected(data.error());
+        return resolution::err(data.error());
     }
 
     double optionPrice = Random::getRandomOptionPrice(cfg);
 
-    auto opt = OptionOrder::create(uid, optionTicker, optionPrice, data->qnty(), data->marketSide(),
-                                   timeNow(), data->strike(), data->optionType(), data->expiry());
+    auto opt =
+        OptionOrder::create(uid, optionTicker, optionPrice, (*data).qnty(), (*data).marketSide(),
+                            timeNow(), (*data).strike(), (*data).optionType(), (*data).expiry());
     if (!opt)
     {
-        return std::unexpected(opt.error());
+        return resolution::err(opt.error());
     }
 
     auto greeks = Random::generateGreeks(*data);

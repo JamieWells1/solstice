@@ -8,6 +8,7 @@
 #include <format>
 #include <memory>
 #include <ostream>
+#include <variant>
 
 namespace solstice
 {
@@ -26,16 +27,15 @@ Order::Order(int uid, Underlying underlying, double price, int qnty, MarketSide 
     d_assetClass = underlying.index();
 }
 
-std::expected<std::shared_ptr<Order>, String> Order::create(int uid, Underlying underlying,
-                                                            double price, int qnty,
-                                                            MarketSide marketSide)
+Resolution<std::shared_ptr<Order>> Order::create(int uid, Underlying underlying, double price,
+                                                 int qnty, MarketSide marketSide)
 {
     TimePoint timeOrderPlaced = timeNow();
 
     auto isOrderValid = validateOrderAttributes(price, qnty, timeOrderPlaced);
     if (!isOrderValid)
     {
-        return std::unexpected(isOrderValid.error());
+        return resolution::err(isOrderValid.error());
     }
 
     auto order = std::shared_ptr<Order>(
@@ -44,27 +44,27 @@ std::expected<std::shared_ptr<Order>, String> Order::create(int uid, Underlying 
     return order;
 }
 
-std::expected<std::shared_ptr<Order>, String> Order::createWithPricer(
-    std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying)
+Resolution<std::shared_ptr<Order>> Order::createWithPricer(std::shared_ptr<pricing::Pricer> pricer,
+                                                           int uid, Underlying underlying)
 {
     auto data = pricer->computeOrderData(underlying);
     if (!data)
     {
-        return std::unexpected(data.error());
+        return resolution::err(data.error());
     }
 
-    return Order::create(uid, underlying, data->price(), data->qnty(), data->marketSide());
+    return Order::create(uid, underlying, (*data).price(), (*data).qnty(), (*data).marketSide());
 }
 
-std::expected<std::shared_ptr<Order>, String> Order::createWithRandomValues(Config cfg, int uid,
-                                                                            Underlying underlying)
+Resolution<std::shared_ptr<Order>> Order::createWithRandomValues(Config cfg, int uid,
+                                                                 Underlying underlying)
 {
     auto data = Random::generateOrderData(cfg);
     if (!data)
     {
-        return std::unexpected(data.error());
+        return resolution::err(data.error());
     }
-    return Order::create(uid, underlying, data->price(), data->qnty(), data->marketSide());
+    return Order::create(uid, underlying, (*data).price(), (*data).qnty(), (*data).marketSide());
 }
 
 // getters
@@ -116,53 +116,53 @@ void Order::matched(bool isFulfilled) { d_matched = isFulfilled; }
 
 void Order::matchedPrice(double matchedPrice) { d_matchedPrice = matchedPrice; }
 
-std::expected<TimePoint, String> Order::timeOrderFulfilled() const
+Resolution<TimePoint> Order::timeOrderFulfilled() const
 {
     // Cannot return time of fulfillment if fulfillment hasn't yet occured
     if (!d_matched)
     {
-        return std::unexpected("Order has not been fulfilled yet\n");
+        return resolution::err("Order has not been fulfilled yet\n");
     }
     return d_timeOrderFulfilled;
 }
 
-std::expected<void, String> Order::validatePrice(const double price)
+Resolution<std::monostate> Order::validatePrice(const double price)
 {
     if (price < 0)
     {
-        return std::unexpected(std::format("Invalid price: {}", price, "\n"));
+        return resolution::err(std::format("Invalid price: {}", price, "\n"));
     }
 
-    return {};
+    return std::monostate{};
 }
 
-std::expected<void, String> Order::validateQnty(const int qnty)
+Resolution<std::monostate> Order::validateQnty(const int qnty)
 {
     if (qnty < 0)
     {
-        return std::unexpected(std::format("Invalid quantity: {}", qnty, "\n"));
+        return resolution::err(std::format("Invalid quantity: {}", qnty, "\n"));
     }
 
-    return {};
+    return std::monostate{};
 }
 
-std::expected<void, String> Order::validateOrderAttributes(double price, int qnty,
-                                                           TimePoint& timeOrderPlaced)
+Resolution<std::monostate> Order::validateOrderAttributes(double price, int qnty,
+                                                          TimePoint& timeOrderPlaced)
 {
     auto validPrice = Order::validatePrice(price);
     auto validQnty = Order::validateQnty(qnty);
 
     if (!validPrice)
     {
-        return std::unexpected(validPrice.error());
+        return resolution::err(validPrice.error());
     }
 
     if (!validQnty)
     {
-        return std::unexpected(validQnty.error());
+        return resolution::err(validQnty.error());
     }
 
-    return {};
+    return std::monostate{};
 }
 
 std::ostream& operator<<(std::ostream& os, const Order& order)

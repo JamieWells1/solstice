@@ -259,7 +259,7 @@ using Underlying = std::variant<Equity, Future, Option>;
 
 AssetClass randomAssetClass();
 
-std::expected<Underlying, String> getUnderlying(AssetClass assetClass);
+Resolution<Underlying> getUnderlying(AssetClass assetClass);
 
 // ===================================================================
 // Templates
@@ -278,12 +278,12 @@ const char* to_string(T type)
 }
 
 template <typename T>
-const std::expected<T, String> randomUnderlying()
+const Resolution<T> randomUnderlying()
 {
     const auto& pool = d_underlyingsPool<T>;
     if (pool.empty())
     {
-        return std::unexpected("Underlying pool is empty");
+        return resolution::err("Underlying pool is empty");
     }
 
     static std::random_device rd;

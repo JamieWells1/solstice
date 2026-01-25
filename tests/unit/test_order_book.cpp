@@ -166,7 +166,7 @@ TEST_F(OrderBookFixture, OppositeMarketSidePriceLevelMapReturnsBidsForAsk)
 
     orderBook->addOrderToBook(*bidOrder);
 
-    auto& oppositeMap = orderBook->oppositeMarketSidePriceLevelMap(*askOrder);
+    auto oppositeMap = orderBook->oppositeMarketSidePriceLevelMap(*askOrder);
     EXPECT_FALSE(oppositeMap.empty());
 }
 
@@ -177,7 +177,7 @@ TEST_F(OrderBookFixture, SameMarketSidePriceLevelMapReturnsBidsForBid)
 
     orderBook->addOrderToBook(*bidOrder);
 
-    auto& sameMap = orderBook->sameMarketSidePriceLevelMap(*bidOrder);
+    auto sameMap = orderBook->sameMarketSidePriceLevelMap(*bidOrder);
     EXPECT_FALSE(sameMap.empty());
 }
 
@@ -190,9 +190,11 @@ TEST_F(OrderBookFixture, GetPriceLevelOppositeOrdersSucceeds)
     auto askOrder = Order::create(2, Equity::AAPL, 100.0, 10.0, MarketSide::Ask);
     ASSERT_TRUE(askOrder.has_value());
 
-    auto result = orderBook->getPriceLevelOppositeOrders(*askOrder, 100.0);
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->get().size(), 1);
+    auto resultRaw = orderBook->getPriceLevelOppositeOrders(*askOrder, 100.0);
+    ASSERT_TRUE(resultRaw.has_value());
+
+    auto result = (*resultRaw).get();
+    EXPECT_EQ(result.size(), 1);
 }
 
 TEST_F(OrderBookFixture, GetPriceLevelOppositeOrdersFailsWhenNoOrders)

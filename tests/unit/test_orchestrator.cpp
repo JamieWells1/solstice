@@ -12,7 +12,7 @@ namespace solstice::matching
 class OrchestratorFixture : public ::testing::Test
 {
    protected:
-    Config config = Config::instance().value();
+    Config config = *Config::instance();
     std::shared_ptr<OrderBook> orderBook;
     std::shared_ptr<Matcher> matcher;
     std::shared_ptr<pricing::Pricer> pricer;

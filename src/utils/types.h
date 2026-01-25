@@ -3,8 +3,12 @@
 
 #include <string>
 
+#include <resolution.hpp>
+
 namespace solstice
 {
+
+using namespace resolution;
 
 using String = std::string;
 

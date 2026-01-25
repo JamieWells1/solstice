@@ -16,7 +16,7 @@ Report::Report(int candlesAnalysed, int tradesCompleted, int longTrades, int sho
 }
 
 Dispatcher::Dispatcher(Strategy strategy, MarketData& marketData)
-    : d_account(Account::create().value()), d_strategy(strategy), d_marketData(marketData)
+    : d_account(*Account::create()), d_strategy(strategy), d_marketData(marketData)
 {
 }
 

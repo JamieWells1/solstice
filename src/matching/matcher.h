@@ -5,8 +5,8 @@
 #include <order_book.h>
 #include <types.h>
 
-#include <expected>
 #include <memory>
+#include <resolution.hpp>
 
 namespace solstice::matching
 {
@@ -22,7 +22,7 @@ class Matcher
    public:
     Matcher(std::shared_ptr<OrderBook> orderBook);
 
-    std::expected<String, String> matchOrder(OrderPtr order, double orderMatchingPrice = -1) const;
+    Resolution<String> matchOrder(OrderPtr order, double orderMatchingPrice = -1) const;
 
     const std::shared_ptr<OrderBook>& orderBook() const;
 

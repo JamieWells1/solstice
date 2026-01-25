@@ -133,7 +133,7 @@ std::shared_ptr<matching::OrderBook> Pricer::orderBook() { return d_orderBook; }
 
 double Pricer::generateSeedPrice()
 {
-    Config cfg = Config::instance().value();
+    Config cfg = *Config::instance();
     return Random::getRandomDouble(cfg.minPrice(), cfg.maxPrice());
 }
 

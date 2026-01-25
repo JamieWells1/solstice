@@ -6,7 +6,6 @@
 #include <order_book.h>
 #include <types.h>
 
-#include <expected>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -28,9 +27,9 @@ String formatOptionDetailsForLogging(OrderPtr order)
     }
 
     std::ostringstream oss;
-    oss << " | Strike: $" << optionOrder->strike() << " | Type: "
-        << (optionOrder->optionType() == OptionType::Call ? "Call" : "Put") << " | Expiry: "
-        << optionOrder->expiry() << "y";
+    oss << " | Strike: $" << optionOrder->strike()
+        << " | Type: " << (optionOrder->optionType() == OptionType::Call ? "Call" : "Put")
+        << " | Expiry: " << optionOrder->expiry() << "y";
     return oss.str();
 }
 
@@ -133,8 +132,7 @@ bool Matcher::canMatchOptions(OrderPtr incomingOrder, OrderPtr candidateOrder) c
            incomingOption->optionType() == candidateOption->optionType();
 }
 
-std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
-                                                  double orderMatchingPrice) const
+Resolution<String> Matcher::matchOrder(OrderPtr incomingOrder, double orderMatchingPrice) const
 {
     double bestPrice = orderMatchingPrice;
 
@@ -143,7 +141,7 @@ std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
         auto bestPriceAvailable = d_orderBook->getBestPrice(incomingOrder);
         if (!bestPriceAvailable)
         {
-            return std::unexpected(bestPriceAvailable.error());
+            return resolution::err(bestPriceAvailable.error());
         }
 
         bestPrice = *bestPriceAvailable;
@@ -155,14 +153,14 @@ std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
     auto it = priceLevelMap.find(bestPrice);
     if (it == priceLevelMap.end())
     {
-        return std::unexpected("Insufficient orders available to fulfill incoming order\n");
+        return resolution::err("Insufficient orders available to fulfill incoming order\n");
     }
 
     auto ordersResult = d_orderBook->getPriceLevelOppositeOrders(incomingOrder, bestPrice);
 
     if (!ordersResult)
     {
-        return std::unexpected(ordersResult.error());
+        return resolution::err(ordersResult.error());
     }
 
     std::deque<OrderPtr>& ordersAtBestPrice = *ordersResult;
@@ -170,14 +168,15 @@ std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
 
     if (ordersAtBestPrice.size() == 1 && bestOrder->uid() == incomingOrder->uid())
     {
-        return std::unexpected("Orders cannot match themselves\n");
+        return resolution::err("Orders cannot match themselves\n");
     }
 
     // For options, check if strike, underlying, expiry, and option type match
     if (!canMatchOptions(incomingOrder, bestOrder))
     {
-        return std::unexpected(
-            "Option orders must have matching strike, underlying equity, expiry, and option type\n");
+        return resolution::err(
+            "Option orders must have matching strike, underlying equity, expiry, and option "
+            "type\n");
     }
     if (bestOrder->outstandingQnty() < incomingOrder->outstandingQnty())
     {
@@ -203,14 +202,14 @@ std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
             auto nextIt = std::next(it);
             if (nextIt == priceLevelMap.end())
             {
-                return std::unexpected("Insufficient orders available to fulfill incoming order\n");
+                return resolution::err("Insufficient orders available to fulfill incoming order\n");
             }
 
             const double nextBestPrice = nextIt->first;
 
             if (!withinPriceRange(nextBestPrice, incomingOrder))
             {
-                return std::unexpected("All other orders out of price range\n");
+                return resolution::err("All other orders out of price range\n");
             }
 
             auto result = matchOrder(incomingOrder, nextBestPrice);
@@ -247,7 +246,7 @@ std::expected<String, String> Matcher::matchOrder(OrderPtr incomingOrder,
         return finalMatchResult;
     }
 
-    return std::unexpected("An error occured when fetching order quantity\n");
+    return resolution::err("An error occured when fetching order quantity\n");
 }
 
 Matcher::Matcher(std::shared_ptr<OrderBook> orderBook) : d_orderBook(orderBook) {}

@@ -195,7 +195,7 @@ TEST(GreeksTest, ZeroGreeksAllowed)
 TEST_F(OptionsTest, BlackScholesCallPriceIsPositive)
 {
     // Set up underlying price data
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     // Simulate some price history for volatility
@@ -213,7 +213,7 @@ TEST_F(OptionsTest, BlackScholesCallPriceIsPositive)
 
 TEST_F(OptionsTest, BlackScholesPutPriceIsPositive)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -227,7 +227,7 @@ TEST_F(OptionsTest, BlackScholesPutPriceIsPositive)
 
 TEST_F(OptionsTest, ITMCallMoreExpensiveThanOTM)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -249,7 +249,7 @@ TEST_F(OptionsTest, ITMCallMoreExpensiveThanOTM)
 
 TEST_F(OptionsTest, LongerExpiryMoreExpensive)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -270,7 +270,7 @@ TEST_F(OptionsTest, LongerExpiryMoreExpensive)
 
 TEST_F(OptionsTest, BlackScholesWithZeroVolatility)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     // Don't update volatility - should remain at initial low value
 
@@ -283,7 +283,7 @@ TEST_F(OptionsTest, BlackScholesWithZeroVolatility)
 
 TEST_F(OptionsTest, BlackScholesWithVeryLowExpiry)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
 
@@ -301,7 +301,7 @@ TEST_F(OptionsTest, BlackScholesWithVeryLowExpiry)
 
 TEST_F(OptionsTest, ComputeGreeksForCallOption)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -329,7 +329,7 @@ TEST_F(OptionsTest, ComputeGreeksForCallOption)
 
 TEST_F(OptionsTest, ComputeGreeksForPutOption)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -356,7 +356,7 @@ TEST_F(OptionsTest, ComputeGreeksForPutOption)
 
 TEST_F(OptionsTest, ATMCallDeltaNearHalf)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -373,7 +373,7 @@ TEST_F(OptionsTest, ATMCallDeltaNearHalf)
 
 TEST_F(OptionsTest, ITMCallDeltaHigherThanOTM)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -401,7 +401,7 @@ TEST_F(OptionsTest, ITMCallDeltaHigherThanOTM)
 
 TEST_F(OptionsTest, ComputeOptionDataReturnsValidData)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     PricerDepOptionData data = pricer->computeOptionData(Option::AAPL_MAR26_C);
@@ -413,7 +413,7 @@ TEST_F(OptionsTest, ComputeOptionDataReturnsValidData)
 
 TEST_F(OptionsTest, ComputeOptionDataStrikeIsReasonable)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -434,7 +434,7 @@ TEST_F(OptionsTest, ComputeOptionDataStrikeIsReasonable)
 
 TEST_F(OptionsTest, VolatilityUpdateWorks)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
 
     equityData.updateVolatility(100.0);
     equityData.updateVolatility(102.0);
@@ -447,8 +447,8 @@ TEST_F(OptionsTest, VolatilityUpdateWorks)
 
 TEST_F(OptionsTest, HigherPriceMovementsIncreaseVolatility)
 {
-    auto& data1 = orderBook->getPriceData(Equity::AAPL);
-    auto& data2 = orderBook->getPriceData(Equity::TSLA);
+    auto data1 = orderBook->getPriceData(Equity::AAPL);
+    auto data2 = orderBook->getPriceData(Equity::TSLA);
 
     // Low volatility scenario
     data1.updateVolatility(100.0);
@@ -474,7 +474,7 @@ TEST_F(OptionsTest, HigherPriceMovementsIncreaseVolatility)
 
 TEST_F(OptionsTest, CalculateMarketPriceReturnsPositivePrice)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -491,7 +491,7 @@ TEST_F(OptionsTest, CalculateMarketPriceReturnsPositivePrice)
 
 TEST_F(OptionsTest, MarketPriceWithInvalidTheoreticalPriceUsesFallback)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     PricerDepOptionData optData(Option::AAPL_MAR26_C, Equity::AAPL, MarketSide::Bid, 0.0, 0, 150.0,
@@ -512,10 +512,10 @@ TEST_F(OptionsTest, MarketPriceWithInvalidTheoreticalPriceUsesFallback)
 
 TEST_F(OptionsTest, MarketPriceInitializesSpread)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
-    auto& optData = orderBook->getPriceData(Option::AAPL_MAR26_C);
+    auto optData = orderBook->getPriceData(Option::AAPL_MAR26_C);
 
     // Verify spread is initially zero
     EXPECT_EQ(optData.highestBid(), 0.0);
@@ -534,7 +534,7 @@ TEST_F(OptionsTest, MarketPriceInitializesSpread)
 
 TEST_F(OptionsTest, OTMOptionsHaveWiderSpreads)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     // ATM option
@@ -554,7 +554,7 @@ TEST_F(OptionsTest, OTMOptionsHaveWiderSpreads)
         pricer->calculateMarketPrice(otmData, theoreticalPrice, MarketSide::Bid);
     }
 
-    auto& atmPriceData = orderBook->getPriceData(Option::AAPL_MAR26_C);
+    auto atmPriceData = orderBook->getPriceData(Option::AAPL_MAR26_C);
     double atmSpread = atmPriceData.lowestAsk() - atmPriceData.highestBid();
 
     // Note: We can't directly test OTM spread without separate option tickers,
@@ -564,7 +564,7 @@ TEST_F(OptionsTest, OTMOptionsHaveWiderSpreads)
 
 TEST_F(OptionsTest, MarketPriceHandlesVerySmallBlackScholesPrice)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Deep OTM option with very low theoretical price
@@ -585,7 +585,7 @@ TEST_F(OptionsTest, MarketPriceHandlesVerySmallBlackScholesPrice)
 
 TEST_F(OptionsTest, CreateOptionWithPricerFullWorkflow)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
     equityData.updateVolatility(150.0);
     equityData.updateVolatility(151.0);
@@ -612,7 +612,7 @@ TEST_F(OptionsTest, CreateOptionWithPricerFullWorkflow)
 TEST_F(OptionsTest, PutCallParity)
 {
     // Test approximate put-call parity: C - P ≈ S - K*e^(-rT)
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     double S = 150.0;
     equityData.lastPrice(S);
     equityData.updateVolatility(S);

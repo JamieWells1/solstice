@@ -37,7 +37,7 @@ class PricerTest : public ::testing::Test
 
 TEST_F(PricerTest, InitialSpreadIsSet)
 {
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     EXPECT_GT(data.lastPrice(), 0);
     EXPECT_GE(data.demandFactor(), -1.0);
@@ -46,7 +46,7 @@ TEST_F(PricerTest, InitialSpreadIsSet)
 
 TEST_F(PricerTest, FirstPriceCalculationInitializesSpread)
 {
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     double price = pricer->calculateMarketPrice(Equity::AAPL, MarketSide::Bid);
 
@@ -74,7 +74,7 @@ TEST_F(PricerTest, BidPricesAreReasonable)
         maxPrice = std::max(maxPrice, price);
     }
 
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     EXPECT_EQ(pricesNegative, 0) << "No prices should be negative";
     EXPECT_LT(pricesAtOne, 50) << "Less than 50% should be at minimum price";
@@ -99,7 +99,7 @@ TEST_F(PricerTest, AskPricesAreReasonable)
         maxPrice = std::max(maxPrice, price);
     }
 
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     EXPECT_EQ(pricesNegative, 0) << "No prices should be negative";
     EXPECT_LT(pricesAtOne, 50) << "Less than 50% should be at minimum price";
@@ -108,7 +108,7 @@ TEST_F(PricerTest, AskPricesAreReasonable)
 
 TEST_F(PricerTest, SpreadRemainsValid)
 {
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     for (int i = 0; i < 50; i++)
     {
@@ -125,7 +125,7 @@ TEST_F(PricerTest, SpreadRemainsValid)
 
 TEST_F(PricerTest, QuantityCalculationIsValid)
 {
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     for (int i = 0; i < 10; i++)
     {
@@ -166,7 +166,7 @@ TEST_F(PricerTest, PriceImplWithKnownValues)
 
 TEST_F(PricerTest, QuantityDistribution)
 {
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     int qtyAtOne = 0;
     int minQty = 1000000;
@@ -224,7 +224,7 @@ TEST_F(PricerTest, QuantityDistribution)
 
 TEST_F(PricerTest, PricesFluctuateOverTime)
 {
-    auto& data = orderBook->getPriceData(Equity::AAPL);
+    auto data = orderBook->getPriceData(Equity::AAPL);
 
     std::set<double> uniqueBidPrices;
     std::set<double> uniqueAskPrices;
@@ -289,7 +289,7 @@ TEST_F(BlackScholesTest, CallPriceWithKnownValues)
 {
     // Test Black-Scholes with ATM call option
     // S=100, K=100, r=0.05, T=1
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Create moderate volatility through price movements
@@ -315,7 +315,7 @@ TEST_F(BlackScholesTest, PutPriceWithKnownValues)
 {
     // Test Black-Scholes with ATM put option
     // S=100, K=100, r=0.05, T=1
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Create moderate volatility through price movements
@@ -338,7 +338,7 @@ TEST_F(BlackScholesTest, PutPriceWithKnownValues)
 TEST_F(BlackScholesTest, DeepITMCallHasHighIntrinsicValue)
 {
     // Deep ITM call (S=150, K=100) should be worth close to intrinsic value
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -360,7 +360,7 @@ TEST_F(BlackScholesTest, DeepITMCallHasHighIntrinsicValue)
 TEST_F(BlackScholesTest, DeepOTMCallHasLowValue)
 {
     // Deep OTM call (S=100, K=200) should have very low value
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Create sufficient volatility so Black-Scholes doesn't hit division-by-zero edge case
@@ -383,7 +383,7 @@ TEST_F(BlackScholesTest, DeepOTMCallHasLowValue)
 
 TEST_F(BlackScholesTest, ZeroTimeToExpiryCallEqualsIntrinsic)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(110.0);
 
     for (int i = 0; i < 20; i++)
@@ -402,8 +402,8 @@ TEST_F(BlackScholesTest, ZeroTimeToExpiryCallEqualsIntrinsic)
 
 TEST_F(BlackScholesTest, HighVolatilityIncreasesOptionValue)
 {
-    auto& lowVolData = orderBook->getPriceData(Equity::AAPL);
-    auto& highVolData = orderBook->getPriceData(Equity::TSLA);
+    auto lowVolData = orderBook->getPriceData(Equity::AAPL);
+    auto highVolData = orderBook->getPriceData(Equity::TSLA);
 
     lowVolData.lastPrice(100.0);
     highVolData.lastPrice(100.0);
@@ -438,7 +438,7 @@ TEST_F(BlackScholesTest, HighVolatilityIncreasesOptionValue)
 
 TEST_F(BlackScholesTest, CallAndPutBothPositive)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     for (int i = 0; i < 20; i++)
@@ -462,7 +462,7 @@ TEST_F(BlackScholesTest, CallAndPutBothPositive)
 
 TEST_F(BlackScholesTest, StrikeImpactOnCallPrice)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     for (int i = 0; i < 20; i++)
@@ -491,7 +491,7 @@ TEST_F(BlackScholesTest, StrikeImpactOnCallPrice)
 
 TEST_F(BlackScholesTest, StrikeImpactOnPutPrice)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     for (int i = 0; i < 20; i++)
@@ -524,7 +524,7 @@ TEST_F(BlackScholesTest, StrikeImpactOnPutPrice)
 
 TEST_F(BlackScholesTest, CallDeltaBoundsCheck)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -551,7 +551,7 @@ TEST_F(BlackScholesTest, CallDeltaBoundsCheck)
 
 TEST_F(BlackScholesTest, PutDeltaBoundsCheck)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -577,7 +577,7 @@ TEST_F(BlackScholesTest, PutDeltaBoundsCheck)
 
 TEST_F(BlackScholesTest, GammaIsAlwaysPositive)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -608,7 +608,7 @@ TEST_F(BlackScholesTest, GammaIsAlwaysPositive)
 
 TEST_F(BlackScholesTest, VegaIsAlwaysPositive)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -639,7 +639,7 @@ TEST_F(BlackScholesTest, VegaIsAlwaysPositive)
 
 TEST_F(BlackScholesTest, ThetaIsNegativeForLongOptions)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -665,7 +665,7 @@ TEST_F(BlackScholesTest, ThetaIsNegativeForLongOptions)
 
 TEST_F(BlackScholesTest, ATMOptionsHaveMaxGamma)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -699,7 +699,7 @@ TEST_F(BlackScholesTest, ATMOptionsHaveMaxGamma)
 
 TEST_F(BlackScholesTest, DeltaIncreasesWithMoneyness)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(150.0);
 
     for (int i = 0; i < 20; i++)
@@ -734,7 +734,7 @@ TEST_F(BlackScholesTest, DeltaIncreasesWithMoneyness)
 
 TEST_F(BlackScholesTest, VolatilityInitiallyLow)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Before any updates, volatility is initialized to small value
@@ -746,7 +746,7 @@ TEST_F(BlackScholesTest, VolatilityInitiallyLow)
 
 TEST_F(BlackScholesTest, VolatilityIncreasesWithPriceChanges)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     double volBefore = equityData.volatility();
@@ -765,8 +765,8 @@ TEST_F(BlackScholesTest, VolatilityIncreasesWithPriceChanges)
 
 TEST_F(BlackScholesTest, LargerMovementsCreateHigherVolatility)
 {
-    auto& equityData1 = orderBook->getPriceData(Equity::AAPL);
-    auto& equityData2 = orderBook->getPriceData(Equity::TSLA);
+    auto equityData1 = orderBook->getPriceData(Equity::AAPL);
+    auto equityData2 = orderBook->getPriceData(Equity::TSLA);
 
     equityData1.lastPrice(100.0);
     equityData2.lastPrice(100.0);
@@ -791,7 +791,7 @@ TEST_F(BlackScholesTest, LargerMovementsCreateHigherVolatility)
 
 TEST_F(BlackScholesTest, VolatilityIsAnnualized)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Create realistic daily returns (~2% daily movements)
@@ -810,7 +810,7 @@ TEST_F(BlackScholesTest, VolatilityIsAnnualized)
 
 TEST_F(BlackScholesTest, VolatilityConvergesToSteadyState)
 {
-    auto& equityData = orderBook->getPriceData(Equity::AAPL);
+    auto equityData = orderBook->getPriceData(Equity::AAPL);
     equityData.lastPrice(100.0);
 
     // Simulate many price updates

@@ -93,7 +93,7 @@ MarketSide Random::getRandomMarketSide()
     }
 }
 
-std::expected<pricing::PricerDepOrderData, String> Random::generateOrderData(Config& cfg)
+Resolution<pricing::PricerDepOrderData> Random::generateOrderData(Config& cfg)
 {
     double price = Random::getRandomSpotPrice(cfg.minPrice(), cfg.maxPrice());
     int qnty = Random::getRandomQnty(cfg.minQnty(), cfg.maxQnty());
@@ -124,7 +124,7 @@ std::expected<pricing::PricerDepOrderData, String> Random::generateOrderData(Con
             break;
     }
 
-    return std::unexpected("generateOrderData cannot be invoked on the chosen AssetClass.");
+    return resolution::err("generateOrderData cannot be invoked on the chosen AssetClass.");
 }
 
 // ===================================================================
@@ -178,12 +178,12 @@ double Random::getRandomTheta() { return -getRandomDouble(THETA_LOWER_BOUND, THE
 
 double Random::getRandomVega() { return getRandomDouble(VEGA_LOWER_BOUND, VEGA_UPPER_BOUND); }
 
-std::expected<pricing::PricerDepOptionData, String> Random::generateOptionData(const Config& cfg)
+Resolution<pricing::PricerDepOptionData> Random::generateOptionData(const Config& cfg)
 {
     auto opt = randomUnderlying<Option>();
     if (!opt)
     {
-        return std::unexpected(opt.error());
+        return resolution::err(opt.error());
     }
 
     MarketSide mktSide = getRandomMarketSide();

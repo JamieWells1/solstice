@@ -6,12 +6,12 @@ namespace solstice::strategy
 
 Account::Account(Config& cfg) { d_balance = cfg.initialBalance(); }
 
-std::expected<Account, String> Account::create()
+Resolution<Account> Account::create()
 {
     auto cfg = Config::instance();
     if (!cfg)
     {
-        return std::unexpected(cfg.error());
+        return resolution::err(cfg.error());
     }
 
     return Account(*cfg);

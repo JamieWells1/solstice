@@ -27,7 +27,7 @@ class Random
     static double getRandomSpotPrice(double minPrice, double maxPrice);
     static int getRandomQnty(int minQnty, int maxQnty);
     static MarketSide getRandomMarketSide();
-    static std::expected<pricing::PricerDepOrderData, String> generateOrderData(Config& cfg);
+    static Resolution<pricing::PricerDepOrderData> generateOrderData(Config& cfg);
 
     // options values
     static double getRandomOptionPrice(const Config& cfg);
@@ -38,8 +38,7 @@ class Random
     static double getRandomGamma();
     static double getRandomTheta();
     static double getRandomVega();
-    static std::expected<pricing::PricerDepOptionData, String> generateOptionData(
-        const Config& cfg);
+    static Resolution<pricing::PricerDepOptionData> generateOptionData(const Config& cfg);
     static pricing::Greeks generateGreeks(const pricing::PricerDepOptionData& data);
 
    private:

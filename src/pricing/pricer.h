@@ -66,21 +66,21 @@ class Pricer
     }
 
     template <typename AssetClass>
-    std::expected<PricerDepOrderData, String> computeOrderData(AssetClass& underlying)
+    Resolution<PricerDepOrderData> computeOrderData(AssetClass& underlying)
     {
         if constexpr (std::is_same_v<AssetClass, Option>)
         {
-            return std::unexpected(
+            return resolution::err(
                 "computeOrderData is not appropriate for options. Use computeOptionData instead.");
         }
 
         return std::visit(
-            [this, &underlying](auto&& underlyingValue) -> std::expected<PricerDepOrderData, String>
+            [this, &underlying](auto&& underlyingValue) -> Resolution<PricerDepOrderData>
             {
                 using T = std::decay_t<decltype(underlyingValue)>;
                 if constexpr (std::is_same_v<T, Option>)
                 {
-                    return std::unexpected(
+                    return resolution::err(
                         "computeOrderData is not appropriate for options. Use computeOptionData "
                         "instead.");
                 }

@@ -2,20 +2,21 @@
 #include <types.h>
 
 #include <format>
+#include <variant>
 
 namespace solstice
 {
 
 Config::Config() {}
 
-std::expected<Config, String> Config::instance()
+Resolution<Config> Config::instance()
 {
     Config config;
 
     auto isValid = checkConfig(config);
     if (!isValid)
     {
-        return std::unexpected(isValid.error());
+        return resolution::err(isValid.error());
     }
     return std::move(config);
 }
@@ -50,7 +51,7 @@ void Config::broadcastInterval(int broadcastInterval) { d_broadcastInterval = br
 
 int Config::initialBalance() const { return d_initialBalance; }
 
-std::expected<void, String> Config::checkConfig(Config& config)
+Resolution<std::monostate> Config::checkConfig(Config& config)
 {
     auto values = {double(config.ordersToGenerate()), double(config.minQnty()),
                    double(config.maxQnty()),          double(config.minPrice()),
@@ -58,18 +59,18 @@ std::expected<void, String> Config::checkConfig(Config& config)
 
     if (config.ordersToGenerate() == -1)
     {
-        return {};
+        return std::monostate{};
     }
 
     for (auto value : values)
     {
         if (value < 0)
         {
-            return std::unexpected(std::format("Invalid config value: '{}'\n", value));
+            return resolution::err(std::format("Invalid config value: '{}'\n", value));
         }
     }
 
-    return {};
+    return std::monostate{};
 }
 
 }  // namespace solstice

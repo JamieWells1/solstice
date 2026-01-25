@@ -6,18 +6,19 @@
 #include <sharp_movements.h>
 #include <strategy.h>
 #include <types.h>
+#include "resolution.hpp"
 
 namespace solstice::strategy
 {
 
 namespace py = pybind11;
 
-std::expected<PyInterface, String> PyInterface::establish()
+Resolution<PyInterface> PyInterface::establish()
 {
     auto config = solstice::Config::instance();
     if (!config)
     {
-        return std::unexpected(config.error());
+        return resolution::err(config.error());
     }
 
     auto pyInterface = PyInterface();
@@ -26,7 +27,7 @@ std::expected<PyInterface, String> PyInterface::establish()
 }
 
 template <typename T>
-std::expected<solstice::strategy::Report, String> PyInterface::orchestrate(RawMarketData& rawData)
+Resolution<solstice::strategy::Report> PyInterface::orchestrate(RawMarketData& rawData)
 {
     using namespace solstice::strategy;
 
@@ -67,7 +68,7 @@ PYBIND11_MODULE(py_interface, m)
                             throw std::runtime_error(result.error());
                         }
 
-                        return result.value();
+                        return *result;
                     })
         .def("orchestrate",
              [](PyInterface& self, RawMarketData& rawData)
@@ -79,7 +80,7 @@ PYBIND11_MODULE(py_interface, m)
                      throw std::runtime_error(result.error());
                  }
 
-                 return result.value();
+                 return *result;
              });
 }
 
