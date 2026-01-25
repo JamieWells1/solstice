@@ -6,7 +6,8 @@
 #include <strategy.h>
 #include <types.h>
 
-#include <expected>
+#include <resolution.hpp>
+#include <variant>
 
 namespace solstice
 {
@@ -18,7 +19,7 @@ struct Config
     // Order Book
     // ===================================================================
 
-    static std::expected<Config, String> instance();
+    static Resolution<Config> instance();
 
     LogLevel logLevel() const;
     AssetClass assetClass() const;
@@ -62,7 +63,7 @@ struct Config
     // ===================================================================
     Config();
 
-    static std::expected<void, String> checkConfig(Config& config);
+    static Resolution<std::monostate> checkConfig(Config& config);
 
     // set sim log level
     LogLevel d_logLevel = LogLevel::INFO;

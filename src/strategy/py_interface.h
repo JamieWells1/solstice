@@ -15,12 +15,12 @@ namespace solstice::strategy
 class PyInterface
 {
    public:
-    static std::expected<PyInterface, String> establish();
+    static Resolution<PyInterface> establish();
 
     solstice::strategy::Strategy strategy() const;
 
     template <typename T>
-    std::expected<solstice::strategy::Report, String> orchestrate(RawMarketData& rawData);
+    Resolution<solstice::strategy::Report> orchestrate(RawMarketData& rawData);
 };
 
 }  // namespace solstice::strategy

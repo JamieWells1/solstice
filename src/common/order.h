@@ -8,8 +8,9 @@
 #include <types.h>
 
 #include <ctime>
-#include <expected>
 #include <memory>
+#include <resolution.hpp>
+#include <variant>
 
 namespace solstice::pricing
 {
@@ -24,15 +25,14 @@ class Order
    public:
     virtual ~Order() = default;
 
-    static std::expected<std::shared_ptr<Order>, String> create(int uid, Underlying underlying,
-                                                                double price, int qnty,
-                                                                MarketSide marketSide);
+    static Resolution<std::shared_ptr<Order>> create(int uid, Underlying underlying, double price,
+                                                     int qnty, MarketSide marketSide);
 
-    static std::expected<std::shared_ptr<Order>, String> createWithPricer(
+    static Resolution<std::shared_ptr<Order>> createWithPricer(
         std::shared_ptr<pricing::Pricer> pricer, int uid, Underlying underlying);
 
-    static std::expected<std::shared_ptr<Order>, String> createWithRandomValues(
-        Config d_config, int uid, Underlying underlying);
+    static Resolution<std::shared_ptr<Order>> createWithRandomValues(Config d_config, int uid,
+                                                                     Underlying underlying);
 
     int uid() const;
     Underlying underlying() const;
@@ -43,7 +43,7 @@ class Order
     MarketSide marketSide() const;
     String marketSideString() const;
     TimePoint timeOrderPlaced() const;
-    std::expected<TimePoint, String> timeOrderFulfilled() const;
+    Resolution<TimePoint> timeOrderFulfilled() const;
     int outstandingQnty(int newQnty);
     bool matched() const;
     double matchedPrice() const;
@@ -56,10 +56,10 @@ class Order
     Order(int uid, Underlying underlying, double price, int qnty, MarketSide marketSide,
           TimePoint timeOrderPlaced);
 
-    static std::expected<void, String> validatePrice(const double price);
-    static std::expected<void, String> validateQnty(const int qnty);
-    static std::expected<void, String> validateOrderAttributes(double price, int qnty,
-                                                               TimePoint& timeOrderPlaced);
+    static Resolution<std::monostate> validatePrice(const double price);
+    static Resolution<std::monostate> validateQnty(const int qnty);
+    static Resolution<std::monostate> validateOrderAttributes(double price, int qnty,
+                                                              TimePoint& timeOrderPlaced);
 
     int d_uid;
     Underlying d_underlying;

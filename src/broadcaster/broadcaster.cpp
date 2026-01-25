@@ -312,7 +312,7 @@ void Broadcaster::broadcastBook(const Underlying& underlying,
 {
     int count = d_orderCounter.fetch_add(1, std::memory_order_relaxed);
 
-    int broadcastInterval = Config::instance().value().broadcastInterval();
+    int broadcastInterval = (*Config::instance()).broadcastInterval();
     if (count % broadcastInterval != 0)
     {
         return;

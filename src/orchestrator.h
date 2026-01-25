@@ -21,7 +21,7 @@ namespace solstice::matching
 class Orchestrator
 {
    public:
-    static std::expected<void, String> start(std::optional<broadcaster::Broadcaster>& broadcaster);
+    static Resolution<std::monostate> start(std::optional<broadcaster::Broadcaster>& broadcaster);
 
     Orchestrator(Config config, std::shared_ptr<OrderBook> orderBook,
                  std::shared_ptr<Matcher> matcher, std::shared_ptr<pricing::Pricer> pricer,
@@ -45,8 +45,8 @@ class Orchestrator
 
     OrderPtr popFromQueue();
 
-    std::expected<std::vector<OrderPtr>, String> generateOrders(int& ordersGenerated);
-    std::expected<std::pair<int, int>, String> produceOrders();
+    Resolution<std::vector<OrderPtr>> generateOrders(int& ordersGenerated);
+    Resolution<std::pair<int, int>> produceOrders();
 
     template <typename T>
     void initialiseMutexes(T underlying);

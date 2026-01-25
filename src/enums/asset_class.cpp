@@ -25,7 +25,7 @@ AssetClass randomAssetClass()
     return static_cast<AssetClass>(dist(gen));
 }
 
-std::expected<Underlying, String> getUnderlying(AssetClass assetClass)
+Resolution<Underlying> getUnderlying(AssetClass assetClass)
 {
     switch (assetClass)
     {
@@ -34,30 +34,30 @@ std::expected<Underlying, String> getUnderlying(AssetClass assetClass)
             auto underlying = randomUnderlying<Equity>();
             if (!underlying)
             {
-                return std::unexpected(underlying.error());
+                return resolution::err(underlying.error());
             }
-            return *underlying;
+            return Underlying(*underlying);
         }
         case AssetClass::Future:
         {
             auto underlying = randomUnderlying<Future>();
             if (!underlying)
             {
-                return std::unexpected(underlying.error());
+                return resolution::err(underlying.error());
             }
-            return *underlying;
+            return Underlying(*underlying);
         }
         case AssetClass::Option:
         {
             auto underlying = randomUnderlying<Option>();
             if (!underlying)
             {
-                return std::unexpected(underlying.error());
+                return resolution::err(underlying.error());
             }
-            return *underlying;
+            return Underlying(*underlying);
         }
         default:
-            return std::unexpected("Invalid asset class\n");
+            return resolution::err("Invalid asset class\n");
     }
 }
 

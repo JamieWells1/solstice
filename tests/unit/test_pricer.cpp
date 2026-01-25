@@ -238,8 +238,8 @@ TEST_F(PricerTest, PricesFluctuateOverTime)
         uniqueAskPrices.insert(askPrice);
     }
 
-    // Expect at least 50 unique prices (5% variety) - realistic given spread smoothing and ±2.5% drift
-    // The pricing logic uses 95% weight on existing spread, so variety comes mainly from:
+    // Expect at least 50 unique prices (5% variety) - realistic given spread smoothing and ±2.5%
+    // drift The pricing logic uses 95% weight on existing spread, so variety comes mainly from:
     // 1. Random drift (±2.5% on bid/ask)
     // 2. calculateMarketPriceImpl's order type selection and random ranges
     // 3. Gradual spread adjustments

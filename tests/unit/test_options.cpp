@@ -554,7 +554,7 @@ TEST_F(OptionsTest, OTMOptionsHaveWiderSpreads)
         pricer->calculateMarketPrice(otmData, theoreticalPrice, MarketSide::Bid);
     }
 
-    auto& atmPriceData = orderBook->getPriceData(Option::AAPL_MAR26_C);
+    auto atmPriceData = orderBook->getPriceData(Option::AAPL_MAR26_C);
     double atmSpread = atmPriceData.lowestAsk() - atmPriceData.highestBid();
 
     // Note: We can't directly test OTM spread without separate option tickers,

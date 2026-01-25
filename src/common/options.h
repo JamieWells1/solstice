@@ -6,23 +6,27 @@
 #include <order.h>
 #include <types.h>
 
+#include <resolution.hpp>
+
 namespace solstice
 {
 
-std::expected<Equity, String> extractUnderlyingEquity(Option optionTicker);
+Resolution<Equity> extractUnderlyingEquity(Option optionTicker);
 
 class OptionOrder : public Order
 {
    public:
-    static std::expected<std::shared_ptr<OptionOrder>, String> create(
-        int uid, Option optionTicker, double price, int qnty, MarketSide marketSide,
-        TimePoint timeOrderPlaced, double strike, OptionType optionType, double expiry);
+    static Resolution<std::shared_ptr<OptionOrder>> create(int uid, Option optionTicker,
+                                                           double price, int qnty,
+                                                           MarketSide marketSide,
+                                                           TimePoint timeOrderPlaced, double strike,
+                                                           OptionType optionType, double expiry);
 
-    static std::expected<std::shared_ptr<OptionOrder>, String> createWithPricer(
+    static Resolution<std::shared_ptr<OptionOrder>> createWithPricer(
         std::shared_ptr<pricing::Pricer> pricer, int uid, Option optionTicker);
 
-    static std::expected<std::shared_ptr<OptionOrder>, String> createWithRandomValues(
-        Config d_config, int uid, Option optionTicker);
+    static Resolution<std::shared_ptr<OptionOrder>> createWithRandomValues(Config d_config, int uid,
+                                                                           Option optionTicker);
 
     Equity underlyingEquity() const;
     double strike() const;

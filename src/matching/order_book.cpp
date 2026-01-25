@@ -80,13 +80,13 @@ std::deque<OrderPtr>& OrderBook::ordersDequeAtPrice(OrderPtr order)
                                                     : book.asks[order->price()];
 }
 
-std::expected<std::reference_wrapper<std::deque<OrderPtr>>, String>
-OrderBook::getPriceLevelOppositeOrders(OrderPtr order, double priceToUse)
+Resolution<std::reference_wrapper<std::deque<OrderPtr>>> OrderBook::getPriceLevelOppositeOrders(
+    OrderPtr order, double priceToUse)
 {
     auto it = d_activeOrders.find(order->underlying());
     if (it == d_activeOrders.end())
     {
-        return std::unexpected(std::format("No orders at ticker {} on opposite order side\n",
+        return resolution::err(std::format("No orders at ticker {} on opposite order side\n",
                                            to_string(order->underlying())));
     }
 
@@ -97,7 +97,7 @@ OrderBook::getPriceLevelOppositeOrders(OrderPtr order, double priceToUse)
         auto priceIt = book.asks.find(priceToUse);
         if (priceIt == book.asks.end() || priceIt->second.empty())
         {
-            return std::unexpected(std::format("No prices at ticker {} on opposite order side\n",
+            return resolution::err(std::format("No prices at ticker {} on opposite order side\n",
                                                to_string(order->underlying())));
         }
         return std::ref(priceIt->second);
@@ -107,7 +107,7 @@ OrderBook::getPriceLevelOppositeOrders(OrderPtr order, double priceToUse)
         auto priceIt = book.bids.find(priceToUse);
         if (priceIt == book.bids.end() || priceIt->second.empty())
         {
-            return std::unexpected(std::format("No prices at ticker {} on opposite order side\n",
+            return resolution::err(std::format("No prices at ticker {} on opposite order side\n",
                                                to_string(order->underlying())));
         }
         return std::ref(priceIt->second);
@@ -128,13 +128,13 @@ std::map<double, std::deque<OrderPtr>>& OrderBook::oppositeMarketSidePriceLevelM
     return (order->marketSide() == MarketSide::Bid) ? book.asks : book.bids;
 }
 
-std::expected<std::reference_wrapper<BidPricesAtPriceLevel>, String>
-OrderBook::getBidPricesAtPriceLevel(OrderPtr order)
+Resolution<std::reference_wrapper<BidPricesAtPriceLevel>> OrderBook::getBidPricesAtPriceLevel(
+    OrderPtr order)
 {
     auto it = d_activeOrders.find(order->underlying());
     if (it == d_activeOrders.end())
     {
-        return std::unexpected(
+        return resolution::err(
             std::format("No bid prices available for ticker {}\n", to_string(order->underlying())));
     }
 
@@ -148,13 +148,13 @@ std::set<double, std::greater<double>>& OrderBook::setBidPricesAtPriceLevel(Orde
     return bidsSet;
 }
 
-std::expected<std::reference_wrapper<askPricesAtPriceLevel>, String>
-OrderBook::getaskPricesAtPriceLevel(OrderPtr order)
+Resolution<std::reference_wrapper<askPricesAtPriceLevel>> OrderBook::getaskPricesAtPriceLevel(
+    OrderPtr order)
 {
     auto it = d_activeOrders.find(order->underlying());
     if (it == d_activeOrders.end())
     {
-        return std::unexpected(
+        return resolution::err(
             std::format("No ask prices available for ticker {}\n", to_string(order->underlying())));
     }
 
@@ -168,28 +168,28 @@ std::set<double, std::less<double>>& OrderBook::setAskPricesAtPriceLevel(OrderPt
     return asksSet;
 }
 
-const std::expected<double, String> OrderBook::getBestPrice(OrderPtr orderToMatch)
+const Resolution<double> OrderBook::getBestPrice(OrderPtr orderToMatch)
 {
     if (orderToMatch->marketSide() == MarketSide::Bid)
     {
         auto askPricesSet = getaskPricesAtPriceLevel(orderToMatch);
         if (!askPricesSet)
         {
-            return std::unexpected(askPricesSet.error());
+            return resolution::err(askPricesSet.error());
         }
 
-        auto& askPrices = askPricesSet->get();
+        auto& askPrices = (*askPricesSet).get();
 
         if (askPrices.size() == 0)
         {
-            return std::unexpected(std::format("No ask orders found for ticker {}\n",
+            return resolution::err(std::format("No ask orders found for ticker {}\n",
                                                to_string(orderToMatch->underlying())));
         }
 
         double lowestaskPrice = *askPrices.begin();
         if (lowestaskPrice > orderToMatch->price())
         {
-            return std::unexpected(
+            return resolution::err(
                 "No matching ask orders lower than or equal to bid "
                 "price\n");
         }
@@ -201,14 +201,14 @@ const std::expected<double, String> OrderBook::getBestPrice(OrderPtr orderToMatc
         auto bidPricesSet = getBidPricesAtPriceLevel(orderToMatch);
         if (!bidPricesSet)
         {
-            return std::unexpected(bidPricesSet.error());
+            return resolution::err(bidPricesSet.error());
         }
 
-        auto& bidPrices = bidPricesSet->get();
+        auto& bidPrices = (*bidPricesSet).get();
 
         if (bidPrices.size() == 0)
         {
-            return std::unexpected(std::format("No bid orders found for ticker {}\n",
+            return resolution::err(std::format("No bid orders found for ticker {}\n",
                                                to_string(orderToMatch->underlying())));
         }
 
@@ -216,7 +216,7 @@ const std::expected<double, String> OrderBook::getBestPrice(OrderPtr orderToMatc
         double highestBidPrice = *bidPrices.begin();
         if (highestBidPrice < orderToMatch->price())
         {
-            return std::unexpected(
+            return resolution::err(
                 "No matching bid orders lower than or equal to bid "
                 "price\n");
         }

@@ -4,7 +4,7 @@
 #include <config.h>
 #include <position.h>
 
-#include <expected>
+#include <resolution.hpp>
 
 namespace solstice::strategy
 {
@@ -12,7 +12,7 @@ namespace solstice::strategy
 class Account
 {
    public:
-    static std::expected<Account, String> create();
+    static Resolution<Account> create();
 
     int balance() const;
     const std::vector<Position>& positions() const;

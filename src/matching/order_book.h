@@ -56,7 +56,7 @@ class OrderBook
     void addOptionsToDataMap();
 
     const std::vector<Transaction>& transactions() const;
-    const std::expected<double, String> getBestPrice(OrderPtr orderToMatch);
+    const Resolution<double> getBestPrice(OrderPtr orderToMatch);
 
     std::optional<std::reference_wrapper<std::deque<OrderPtr>>> getOrdersDequeAtPrice(
         const OrderPtr order);
@@ -66,7 +66,7 @@ class OrderBook
     std::map<double, std::deque<OrderPtr>>& sameMarketSidePriceLevelMap(OrderPtr order);
     std::map<double, std::deque<OrderPtr>>& oppositeMarketSidePriceLevelMap(OrderPtr order);
 
-    std::expected<std::reference_wrapper<std::deque<OrderPtr>>, String> getPriceLevelOppositeOrders(
+    Resolution<std::reference_wrapper<std::deque<OrderPtr>>> getPriceLevelOppositeOrders(
         OrderPtr order, double priceToUse);
 
     void addOrderToBook(OrderPtr order);
@@ -86,9 +86,9 @@ class OrderBook
     }
 
    private:
-    std::expected<std::reference_wrapper<BidPricesAtPriceLevel>, String> getBidPricesAtPriceLevel(
+    Resolution<std::reference_wrapper<BidPricesAtPriceLevel>> getBidPricesAtPriceLevel(
         OrderPtr order);
-    std::expected<std::reference_wrapper<askPricesAtPriceLevel>, String> getaskPricesAtPriceLevel(
+    Resolution<std::reference_wrapper<askPricesAtPriceLevel>> getaskPricesAtPriceLevel(
         OrderPtr order);
 
     BidPricesAtPriceLevel& setBidPricesAtPriceLevel(OrderPtr order);

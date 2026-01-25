@@ -38,9 +38,9 @@ String formatOptionDetails(OrderPtr order)
     }
 
     std::ostringstream oss;
-    oss << " | Strike: $" << optionOrder->strike()
-        << " | Type: " << (optionOrder->optionType() == OptionType::Call ? "Call" : "Put")
-        << " | Expiry: " << optionOrder->expiry() << "y";
+    oss << " | Strike: $" << (*optionOrder).strike()
+        << " | Type: " << ((*optionOrder).optionType() == OptionType::Call ? "Call" : "Put")
+        << " | Expiry: " << (*optionOrder).expiry() << "y";
     return oss.str();
 }
 
@@ -65,15 +65,14 @@ std::map<Underlying, std::mutex>& Orchestrator::underlyingMutexes() { return d_u
 
 std::queue<OrderPtr>& Orchestrator::orderProcessQueue() { return d_orderProcessQueue; }
 
-std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& ordersGenerated)
+Resolution<std::vector<OrderPtr>> Orchestrator::generateOrders(int& ordersGenerated)
 {
     auto underlying = getUnderlying(config().assetClass());
     if (!underlying)
     {
-        return std::unexpected(underlying.error());
+        return resolution::err(underlying.error());
     }
 
-    std::expected<OrderPtr, String> order;
     std::vector<OrderPtr> orders;
 
     if (config().assetClass() == AssetClass::Option)
@@ -83,46 +82,36 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
         auto underlyingEquity = extractUnderlyingEquity(option);
         if (!underlyingEquity)
         {
-            return std::unexpected(underlyingEquity.error());
+            return resolution::err(underlyingEquity.error());
         }
 
-        std::expected<OrderPtr, String> equityOrder;
-        if (config().usePricer())
-        {
-            equityOrder = Order::createWithPricer(pricer(), ordersGenerated, *underlyingEquity);
-        }
-        else
-        {
-            equityOrder =
-                Order::createWithRandomValues(config(), ordersGenerated, *underlyingEquity);
-        }
+        Resolution<OrderPtr> equityOrder =
+            config().usePricer()
+                ? Order::createWithPricer(pricer(), ordersGenerated, *underlyingEquity)
+                : Order::createWithRandomValues(config(), ordersGenerated, *underlyingEquity);
 
         if (!equityOrder)
         {
-            return std::unexpected(equityOrder.error());
+            return resolution::err(equityOrder.error());
         }
 
         ordersGenerated++;
         orders.emplace_back(*equityOrder);
 
         // Generate option order only at the specified ratio
-        if (ordersGenerated % static_cast<int>((std::round((EQUITY_OPTION_ORDER_RATIO + 1) * 10) / 10)) ==
-            0 && ordersGenerated != 0)
+        if (ordersGenerated %
+                    static_cast<int>((std::round((EQUITY_OPTION_ORDER_RATIO + 1) * 10) / 10)) ==
+                0 &&
+            ordersGenerated != 0)
         {
-            std::expected<OrderPtr, String> optionOrder;
-            if (config().usePricer())
-            {
-                optionOrder = OptionOrder::createWithPricer(pricer(), ordersGenerated, option);
-            }
-            else
-            {
-                optionOrder =
-                    OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
-            }
+            auto optionOrder =
+                config().usePricer()
+                    ? OptionOrder::createWithPricer(pricer(), ordersGenerated, option)
+                    : OptionOrder::createWithRandomValues(config(), ordersGenerated, option);
 
             if (!optionOrder)
             {
-                return std::unexpected(optionOrder.error());
+                return resolution::err(optionOrder.error());
             }
 
             ordersGenerated++;
@@ -131,18 +120,13 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
     }
     else
     {
-        if (config().usePricer())
-        {
-            order = Order::createWithPricer(pricer(), ordersGenerated, *underlying);
-        }
-        else
-        {
-            order = Order::createWithRandomValues(config(), ordersGenerated, *underlying);
-        }
+        auto order = config().usePricer()
+                         ? Order::createWithPricer(pricer(), ordersGenerated, *underlying)
+                         : Order::createWithRandomValues(config(), ordersGenerated, *underlying);
 
         if (!order)
         {
-            return std::unexpected(order.error());
+            return resolution::err(order.error());
         }
 
         ordersGenerated++;
@@ -154,7 +138,7 @@ std::expected<std::vector<OrderPtr>, String> Orchestrator::generateOrders(int& o
 
 bool Orchestrator::processOrder(OrderPtr order)
 {
-    auto mutexIt = underlyingMutexes().find(order->underlying());
+    auto mutexIt = underlyingMutexes().find((*order).underlying());
     if (mutexIt != underlyingMutexes().end())
     {
         std::lock_guard<std::mutex> lock(mutexIt->second);
@@ -165,7 +149,7 @@ bool Orchestrator::processOrder(OrderPtr order)
         // Broadcast book after order is processed
         if (d_broadcaster.get().has_value())
         {
-            d_broadcaster.get()->broadcastBook(order->underlying(), d_orderBook);
+            d_broadcaster.get()->broadcastBook((*order).underlying(), d_orderBook);
         }
 
         d_pricer->update(order);
@@ -178,8 +162,8 @@ bool Orchestrator::processOrder(OrderPtr order)
                 std::cout << "Order: " << order->uid() << " | Asset class: " << order->assetClass()
                           << " | Matched with: N/A"
                           << " | Side: " << order->marketSideString()
-                          << " | Ticker: " << to_string(order->underlying()) << " | Price: $"
-                          << order->price() << " | Qnty: " << order->qnty()
+                          << " | Ticker: " << to_string((*order).underlying()) << " | Price: $"
+                          << (*order).price() << " | Qnty: " << (*order).qnty()
                           << " | Remaining Qnty: " << order->outstandingQnty()
                           << formatOptionDetails(order) << " | Reason: " << orderMatched.error()
                           << "\n";
@@ -208,7 +192,7 @@ bool Orchestrator::processOrder(OrderPtr order)
         // Broadcast book after order is processed
         if (d_broadcaster.get().has_value())
         {
-            d_broadcaster.get()->broadcastBook(order->underlying(), d_orderBook);
+            d_broadcaster.get()->broadcastBook((*order).underlying(), d_orderBook);
         }
 
         pricer()->update(order);
@@ -222,8 +206,8 @@ bool Orchestrator::processOrder(OrderPtr order)
                 std::cout << "Order: " << order->uid() << " | Asset class: " << order->assetClass()
                           << " | Matched with: N/A"
                           << " | Side: " << order->marketSideString()
-                          << " | Ticker: " << to_string(order->underlying()) << " | Price: $"
-                          << order->price() << " | Qnty: " << order->qnty()
+                          << " | Ticker: " << to_string((*order).underlying()) << " | Price: $"
+                          << (*order).price() << " | Qnty: " << (*order).qnty()
                           << " | Remaining Qnty: " << order->outstandingQnty()
                           << formatOptionDetails(order) << " | Reason: " << orderMatched.error()
                           << "\n";
@@ -340,7 +324,7 @@ void Orchestrator::initialiseUnderlyings(AssetClass assetClass)
     }
 }
 
-std::expected<std::pair<int, int>, String> Orchestrator::produceOrders()
+Resolution<std::pair<int, int>> Orchestrator::produceOrders()
 {
     d_done.store(false);
 
@@ -368,7 +352,7 @@ std::expected<std::pair<int, int>, String> Orchestrator::produceOrders()
             d_done.store(true);
             d_queueConditionVar.notify_all();
             for (auto& thread : threadPool) thread.join();
-            return std::unexpected(orders.error());
+            return resolution::err(orders.error());
         }
 
         for (const auto& order : *orders)
@@ -393,14 +377,13 @@ std::expected<std::pair<int, int>, String> Orchestrator::produceOrders()
     return std::pair{ordersExecuted.load(), ordersMatched.load()};
 }
 
-std::expected<void, String> Orchestrator::start(
-    std::optional<broadcaster::Broadcaster>& broadcaster)
+Resolution<std::monostate> Orchestrator::start(std::optional<broadcaster::Broadcaster>& broadcaster)
 {
     auto config = Config::instance();
 
     if (!config)
     {
-        return std::unexpected(config.error());
+        return resolution::err(config.error());
     }
 
     auto orderBook = std::make_shared<OrderBook>();
@@ -409,7 +392,7 @@ std::expected<void, String> Orchestrator::start(
 
     Orchestrator orchestrator{*config, orderBook, matcher, pricer, broadcaster};
 
-    orchestrator.initialiseUnderlyings(config->assetClass());
+    orchestrator.initialiseUnderlyings((*config).assetClass());
 
     auto start = timeNow();
     auto result = orchestrator.produceOrders();
@@ -417,19 +400,19 @@ std::expected<void, String> Orchestrator::start(
 
     if (!result)
     {
-        return std::unexpected("An error occured when trying to create orders: " + result.error());
+        return resolution::err("An error occured when trying to create orders: " + result.error());
     }
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    if (config->logLevel() >= LogLevel::INFO)
+    if ((*config).logLevel() >= LogLevel::INFO)
     {
         std::cout << "\nSUMMARY:"
-                  << "\nOrders executed: " << result->first
-                  << "\nOrders matched: " << result->second << "\nTime taken: " << duration;
+                  << "\nOrders executed: " << (*result).first
+                  << "\nOrders matched: " << (*result).second << "\nTime taken: " << duration;
     }
 
-    return {};
+    return std::monostate{};
 }
 
 }  // namespace solstice::matching
