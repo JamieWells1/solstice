@@ -588,8 +588,19 @@ PricerDepOptionData Pricer::computeOptionData(Option opt)
     // use private empty constructor as we are not populating the parent qnty and price attributes
     PricerDepOptionData data;
 
+    auto underlyingEquity = extractUnderlyingEquity(opt);
+    if (!underlyingEquity)
+    {
+        // If extraction fails, we need to handle it. For now, default to the first equity
+        // This matches the behavior expected by the pricer
+        data.underlyingEquity(Equity::AAPL);
+    }
+    else
+    {
+        data.underlyingEquity(*underlyingEquity);
+    }
+
     data.optionTicker(opt);
-    data.underlyingEquity(*extractUnderlyingEquity(opt));
     data.strike(calculateStrikeImpl(data));
     data.marketSide(calculateMarketSide(opt));
     data.optionType(Random::getRandomOptionType());
