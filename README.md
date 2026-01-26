@@ -49,10 +49,7 @@ See [`BENCHMARK_HISTORY.md`](BENCHMARK_HISTORY.md) for all historical runs, and 
 Solstice uses CMake for build configuration. To build:
 
 ```bash
-mkdir -p build
-cd build
-cmake ..
-cmake --build .
+mkdir build && cd build && cmake .. && cmake --build .
 ```
 
 The main executable will be output to `build/bin/solstice`.
