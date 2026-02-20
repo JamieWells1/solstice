@@ -56,28 +56,7 @@ The main executable will be output to `build/bin/solstice`.
 
 ### Configuration
 
-All runtime configuration is managed via [src/config/config.h](src/config/config.h). Key parameters:
-
-**Order Generation & Matching:**
-
-- `d_ordersToGenerate` — Number of orders to generate (default: 10000)
-- `d_underlyingPoolCount` — Number of distinct tickers/symbols (default: 8)
-- `d_minQnty` / `d_maxQnty` — Quantity range for random orders (default: 1-20)
-- `d_minPrice` / `d_maxPrice` — Price range for random orders (default: 9.0-10.0)
-- `d_usePricer` — Use pricing engine for order generation (default: true)
-
-**Broadcaster:**
-
-- `d_enableBroadcaster` — Enable WebSocket broadcasting (default: false)
-- `d_broadcastInterval` — Broadcast 1 in N orders to reduce traffic (default: 10)
-
-**Logging:**
-
-- `d_logLevel` — Set log verbosity: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR` (default: INFO)
-
-**Backtesting:**
-
-- `d_initialBalance` — Starting capital for strategy backtests (default: 10000)
+All runtime configuration is managed via [src/config/config.h](src/config/config.h).
 
 ### Running the Matching Engine
 
