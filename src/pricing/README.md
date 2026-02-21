@@ -2,10 +2,6 @@
 
 The Solstice Pricing Engine is a dynamic, demand-driven pricing system for generating realistic order flow. It computes market side, price, and quantity for each order based on market microstructure principles including demand factors, spread dynamics, and volatility-adjusted pricing.
 
-> ## [Experiment]
->
-> _Placeholder for experiment results_
-
 ## Key Features
 
 - Demand factor-driven market side determination with mean reversion.
